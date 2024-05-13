@@ -1,0 +1,8 @@
+pdbpp
+black
+isort
+pytest
+
+requests
+pydantic
+python-slugify
