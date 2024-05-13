@@ -148,7 +148,6 @@ class PretalxSubmission(BaseModel):
             if answer.question_text == SubmissionQuestion.level:
                 values["level"] = answer.answer_text.lower()
 
-
         slug = slugify(values["title"])
         values["slug"] = slug
         values["website_url"] = f"https://ep2024.europython.eu/session/{slug}"
@@ -213,26 +212,31 @@ def publishable_speakers(accepted_proposals: set[str]) -> dict[str, PretalxSpeak
     return output
 
 
-# print(len(parse_submissions()))
-# print(len(accepted := publishable_submissions()))
+def save_publishable_sessions():
+    path = "../data/public/2024/sessions.json"
 
-# print(len(parse_speakers()))
-# print(len(publishable_speakers(accepted.keys())))
+    publishable = publishable_submissions()
 
-# # print(
-# #     json.dumps(
-# #         [p.dict() for p in publishable_speakers(accepted.keys()).values()],
-# #         indent=2
-# #     )
-# # )
-# print(
-#     json.dumps([a.dict() for a in accepted.values()], indent=2)
-# )
+    data = {k: v.dict() for k, v in publishable.items()}
+    with open(path, "w") as fd:
+        json.dump(data, fd, indent=2)
 
 
-# # from pprint import pprint
+def save_publishable_speakers():
+    path = "../data/public/2024/speakers.json"
 
-# # pprint(accepted)
+    publishable = publishable_submissions()
+    speakers = publishable_speakers(publishable.keys())
 
-# # Check if all the slugs are unique
-# assert len(set(s.slug for s in accepted.values())) == len(accepted)
+    data = {k: v.dict() for k, v in speakers.items()}
+    with open(path, "w") as fd:
+        json.dump(data, fd, indent=2)
+
+
+assert len(set(s.slug for s in publishable_submissions().values())) == len(
+    publishable_submissions()
+)
+
+
+save_publishable_sessions()
+save_publishable_speakers()
