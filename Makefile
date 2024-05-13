@@ -10,9 +10,11 @@ deps/install:
 
 install: deps/install
 
-update:
-	mkdir -p data/
-	python src/save.py
-
 download:
 	cd src && python download.py
+
+transform:
+	cd src && python transform.py
+
+
+all: download transform

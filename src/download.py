@@ -21,8 +21,10 @@ headers = {
 base_url = f"https://pretalx.com/api/events/{Config.event}/"
 
 resources = [
-    "submissions",
-    "speakers",
+    # Questions needs to be passed to include answers in the same endpoint,
+    # saving us later time with joining the answers.
+    "submissions?questions=all",
+    "speakers?questions=all",
 ]
 
 for resource in resources:
@@ -40,9 +42,9 @@ for resource in resources:
         data = response.json()
         res0 += data["results"]
 
-    fnames = [
-        f"../data/raw/{Config.event}/{resource}_latest.json",
-    ]
-    for fname in fnames:
-        with open(fname, "w") as fd:
-            json.dump(res0, fd)
+    filename = resource.split("?")[0]  # To get rid of "?questions"
+    filename = f"{filename}_latest.json"
+    filepath = f"../data/raw/{Config.event}/{filename}"
+
+    with open(filepath, "w") as fd:
+        json.dump(res0, fd)

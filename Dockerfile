@@ -9,4 +9,4 @@ COPY src/ ./src/
 COPY Makefile .
 
 
-CMD ["make", "update"]
+CMD ["make", "all"]
