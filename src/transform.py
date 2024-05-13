@@ -3,7 +3,7 @@ import os
 from collections import defaultdict
 from datetime import date, datetime, time, timedelta
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic.class_validators import root_validator
 from slugify import slugify
 
@@ -18,6 +18,8 @@ class SpeakerQuestion:
 class SubmissionQuestion:
     outline = "Outline"
     tweet = "Abstract as a tweet / toot"
+    delivery = "My presentation can be delivered"
+    level = "Expected audience expertise"
 
 
 class SubmissionState:
@@ -49,7 +51,7 @@ class PretalxSpeaker(BaseModel):
     biography: str | None
     avatar: str | None
     slug: str
-    answers: list[PretalxAnswer]
+    answers: list[PretalxAnswer] = Field(..., exclude=True)
     submissions: list[str]
 
     # Extracted
@@ -81,11 +83,6 @@ class PretalxSpeaker(BaseModel):
             if answer.question_text == SpeakerQuestion.mastodon:
                 values["mastodon"] = answer.answer_text
 
-        # Remove all the other answers
-        # This is important, because some answers might contain non-public
-        # information
-        values["answers"] = []
-
         return values
 
 
@@ -98,9 +95,8 @@ class PretalxSubmission(BaseModel):
     track: str | None
     state: str
     abstract: str
-    answers: list[PretalxAnswer]
+    answers: list[PretalxAnswer] = Field(..., exclude=True)
     tweet: str = ""
-    outline: str
     duration: str
 
     level: str = ""
@@ -134,26 +130,28 @@ class PretalxSubmission(BaseModel):
                 if isinstance(values[field], dict):
                     values[field] = values[field]["en"]
 
-        values["speakers"] = {s["code"] for s in values["speakers"]}
+        values["speakers"] = sorted([s["code"] for s in values["speakers"]])
 
         answers = [PretalxAnswer.parse_obj(ans) for ans in values["answers"]]
 
         for answer in answers:
-            if answer.question_text == SubmissionQuestion.outline:
-                values["outline"] = answer.answer_text
+            # TODO if we need any other questions
             if answer.question_text == SubmissionQuestion.tweet:
                 values["tweet"] = answer.answer_text
 
-            # TODO if we need any other questions
+            if answer.question_text == SubmissionQuestion.delivery:
+                if "in-person" in answer.answer_text:
+                    values["delivery"] = "in-person"
+                else:
+                    values["delivery"] = "remote"
+
+            if answer.question_text == SubmissionQuestion.level:
+                values["level"] = answer.answer_text.lower()
+
 
         slug = slugify(values["title"])
         values["slug"] = slug
         values["website_url"] = f"https://ep2024.europython.eu/session/{slug}"
-
-        # Remove all the other answers
-        # This is important, because some answers might contain non-public
-        # information
-        values["answers"] = []
 
         return values
 
@@ -215,18 +213,26 @@ def publishable_speakers(accepted_proposals: set[str]) -> dict[str, PretalxSpeak
     return output
 
 
-print(len(parse_submissions()))
-print(len(accepted := publishable_submissions()))
+# print(len(parse_submissions()))
+# print(len(accepted := publishable_submissions()))
 
-print(len(parse_speakers()))
-print(len(publishable_speakers(accepted.keys())))
+# print(len(parse_speakers()))
+# print(len(publishable_speakers(accepted.keys())))
 
-print(publishable_speakers(accepted.keys()))
+# # print(
+# #     json.dumps(
+# #         [p.dict() for p in publishable_speakers(accepted.keys()).values()],
+# #         indent=2
+# #     )
+# # )
+# print(
+#     json.dumps([a.dict() for a in accepted.values()], indent=2)
+# )
 
 
-from pprint import pprint
+# # from pprint import pprint
 
-pprint(accepted)
+# # pprint(accepted)
 
-# Check if all the slugs are unique
-assert len(set(s.slug for s in accepted.values())) == len(accepted)
+# # Check if all the slugs are unique
+# assert len(set(s.slug for s in accepted.values())) == len(accepted)

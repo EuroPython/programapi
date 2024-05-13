@@ -18,3 +18,6 @@ transform:
 
 
 all: download transform
+
+test:
+	PYTHONPATH="src" pytest

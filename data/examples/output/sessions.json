@@ -1,0 +1,50 @@
+{
+    "A8CD3F": {
+        "code": "A8CD3F",
+        "title": "This is a test talk from a test speaker about a test topic.",
+        "speakers": [
+            "F3DC8A", "ZXCVBN"
+        ],
+        "submission_type": "Talk (long session)",
+        "slug": "this-is-a-test-talk-from-a-test-speaker-about-a-test-topic",
+        "track": "Software Engineering & Architecture",
+        "state": "confirmed",
+        "abstract": "This is the abstract of the talk, it should be about Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec condimentum viverra ante in dignissim. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec molestie lorem enim, id dignissim mi faucibus a. Suspendisse mollis lobortis mollis. Praesent eu lorem id velit maximus blandit eget at nisl. Quisque fringilla pharetra euismod. Morbi id ante vitae tortor volutpat interdum fermentum id tortor. Vivamus ligula nisl, mattis molestie purus vel, interdum venenatis nulla. Nam suscipit scelerisque ornare. Ut consequat sem vel sapien porta pretium. Nullam non lacinia nulla, a tincidunt dui. Sed consequat nibh in nibh ornare, rhoncus sollicitudin sem lobortis. Etiam molestie est et felis sollicitudin, commodo facilisis mi vehicula. Quisque pharetra consectetur ligula, sit amet tincidunt nibh consectetur fringilla. Suspendisse eu libero sed magna malesuada bibendum sed et enim. Phasellus convallis tortor nec lectus venenatis, id tristique quam finibus.",
+        "tweet": "This is a short version of this talk, as a tweet.",
+        "duration": "45",
+        "level": "intermediate",
+        "delivery": "in-person",
+        "room": null,
+        "start": null,
+        "end": null,
+        "talks_in_parallel": null,
+        "talks_after": null,
+        "next_talk_code": null,
+        "prev_talk_code": null,
+        "website_url": "https://ep2024.europython.eu/session/this-is-a-test-talk-from-a-test-speaker-about-a-test-topic"
+    },
+    "B8CD4F": {
+        "code": "B8CD4F",
+        "title": "A talk with shorter title",
+        "speakers": [
+            "G3DC8A"
+        ],
+        "submission_type": "Talk",
+        "slug": "a-talk-with-shorter-title",
+        "track": "PyData: LLMs",
+        "state": "confirmed",
+        "abstract": "This is the abstract of the shoerter talk, it should be about Lorem ipsum dolor sit amet",
+        "tweet": "Hey, short tweet",
+        "duration": "30",
+        "level": "beginner",
+        "delivery": "in-person",
+        "room": null,
+        "start": null,
+        "end": null,
+        "talks_in_parallel": null,
+        "talks_after": null,
+        "next_talk_code": null,
+        "prev_talk_code": null,
+        "website_url": "https://ep2024.europython.eu/session/a-talk-with-shorter-title"
+    }
+}

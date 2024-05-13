@@ -1,0 +1,210 @@
+[
+    {
+        "code": "A8CD3F",
+        "speakers": [
+            {
+                "code": "F3DC8A",
+                "name": "A Speaker",
+                "biography": "This is a biography of F3D speaker",
+                "avatar": "https://pretalx.com/media/avatars/picture.jpg",
+                "email": "f3dc8a@example.com"
+            },
+            {
+                "code": "ZXCVBN",
+                "name": "ZXC Speaker",
+                "biography": "This is a biography of ZXC speaker",
+                "avatar": "https://pretalx.com/media/avatars/picture.jpg",
+                "email": "zxcvbn@example.com"
+            }
+        ],
+        "title": "This is a test talk from a test speaker about a test topic.",
+        "submission_type": "Talk (long session)",
+        "submission_type_id": 3961,
+        "track": {
+            "en": "Software Engineering & Architecture"
+        },
+        "track_id": 4493,
+        "state": "confirmed",
+        "abstract": "This is the abstract of the talk, it should be about Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec condimentum viverra ante in dignissim. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec molestie lorem enim, id dignissim mi faucibus a. Suspendisse mollis lobortis mollis. Praesent eu lorem id velit maximus blandit eget at nisl. Quisque fringilla pharetra euismod. Morbi id ante vitae tortor volutpat interdum fermentum id tortor. Vivamus ligula nisl, mattis molestie purus vel, interdum venenatis nulla. Nam suscipit scelerisque ornare. Ut consequat sem vel sapien porta pretium. Nullam non lacinia nulla, a tincidunt dui. Sed consequat nibh in nibh ornare, rhoncus sollicitudin sem lobortis. Etiam molestie est et felis sollicitudin, commodo facilisis mi vehicula. Quisque pharetra consectetur ligula, sit amet tincidunt nibh consectetur fringilla. Suspendisse eu libero sed magna malesuada bibendum sed et enim. Phasellus convallis tortor nec lectus venenatis, id tristique quam finibus.",
+        "description": null,
+        "duration": 45,
+        "slot_count": 1,
+        "do_not_record": false,
+        "is_featured": false,
+        "content_locale": "en",
+        "slot": null,
+        "image": null,
+        "resources": [],
+        "answers": [
+            {
+                "question": {
+                    "id": 3406,
+                    "question": {
+                        "en": "Outline"
+                    }
+                },
+                "answer": "This is an outline",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null,
+                "options": []
+            },
+            {
+                "question": {
+                    "id": 3412,
+                    "question": {
+                        "en": "Abstract as a tweet / toot"
+                    }
+                },
+                    "answer": "This is a short version of this talk, as a tweet.",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null
+            },
+            {
+                "question": {
+                    "id": 3412,
+                    "question": {
+                        "en": "Expected audience expertise"
+                    }
+                },
+                "answer": "Intermediate",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null,
+                "options": [
+                    {
+                        "id": 4495,
+                        "answer": {
+                            "en": "Intermediate"
+                        }
+                    }
+                ]
+            },
+            {
+                "question": {
+                    "id": 3420,
+                    "question": {
+                        "en": "My presentation can be delivered"
+                    }
+                },
+                "answer": "in-person at the conference venue",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null,
+                "options": [
+                    {
+                        "id": 4500,
+                        "answer": {
+                            "en": "in-person at the conference venue"
+                        }
+                    }
+                ]
+            }
+        ],
+        "created": "2024-03-05T00:00:10.354629+01:00",
+        "pending_state": null,
+        "notes": "",
+        "internal_notes": null,
+        "tags": [],
+        "tag_ids": []
+    },
+    {
+        "code": "B8CD4F",
+        "speakers": [
+            {
+                "code": "G3DC8A",
+                "name": "Another Speaker",
+                "biography": "This is a biography of F3D speaker",
+                "avatar": "https://pretalx.com/media/avatars/picture.jpg",
+                "email": "g3dc8a@example.com"
+            }
+        ],
+        "title": "A talk with shorter title",
+        "submission_type": "Talk",
+        "submission_type_id": 3961,
+        "track": {
+            "en": "PyData: LLMs"
+        },
+        "track_id": 4493,
+        "state": "confirmed",
+        "abstract": "This is the abstract of the talk, it should be about Lorem ipsum dolor sit amet",
+        "description": null,
+        "duration": 30,
+        "slot_count": 1,
+        "do_not_record": false,
+        "is_featured": false,
+        "content_locale": "en",
+        "slot": null,
+        "image": null,
+        "resources": [],
+        "answers": [
+            {
+                "question": {
+                    "id": 3406,
+                    "question": {
+                        "en": "Outline"
+                    }
+                },
+                "answer": "This is an outline",
+                "answer_file": null,
+                "submission": "B8CD4F",
+                "review": null,
+                "person": null,
+                "options": []
+            },
+            {
+                "question": {
+                    "id": 3412,
+                    "question": {
+                        "en": "Expected audience expertise"
+                    }
+                },
+                "answer": "beginner",
+                "answer_file": null,
+                "submission": "B8CD4F",
+                "review": null,
+                "person": null,
+                "options": [
+                    {
+                        "id": 4495,
+                        "answer": {
+                            "en": "Beginner"
+                        }
+                    }
+                ]
+            },
+            {
+                "question": {
+                    "id": 3420,
+                    "question": {
+                        "en": "My presentation can be delivered"
+                    }
+                },
+                "answer": "in-person at the conference venue",
+                "answer_file": null,
+                "submission": "B8CD4F",
+                "review": null,
+                "person": null,
+                "options": [
+                    {
+                        "id": 4500,
+                        "answer": {
+                            "en": "in-person at the conference venue"
+                        }
+                    }
+                ]
+            }
+        ],
+        "created": "2024-03-09T00:00:10.354629+01:00",
+        "pending_state": null,
+        "notes": "",
+        "internal_notes": null,
+        "tags": [],
+        "tag_ids": []
+    }
+]
