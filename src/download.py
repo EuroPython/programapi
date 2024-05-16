@@ -1,6 +1,7 @@
 import json
 
 import requests
+from tqdm import tqdm
 
 from src.config import Config
 
@@ -12,23 +13,24 @@ headers = {
 base_url = f"https://pretalx.com/api/events/{Config.event}/"
 
 resources = [
-    # Questions needs to be passed to include answers in the same endpoint,
+    # Questions need to be passed to include answers in the same endpoint,
     # saving us later time with joining the answers.
     "submissions?questions=all",
     "speakers?questions=all",
 ]
 
 for resource in resources:
-    print("Downloading: ", resource)
     url = base_url + f"{resource}"
 
     res0 = []
     data = {"next": url}
     n = 0
 
+    pbar = tqdm(desc=f"Downloading {resource}", unit=" page", dynamic_ncols=True)
+
     while url := data["next"]:
         n += 1
-        print(f"Page {n}")
+        pbar.update(1)
         response = requests.get(url, headers=headers)
 
         if response.status_code != 200:
@@ -36,6 +38,8 @@ for resource in resources:
 
         data = response.json()
         res0 += data["results"]
+
+    pbar.close()
 
     filename = resource.split("?")[0]  # To get rid of "?questions"
     filename = f"{filename}_latest.json"
