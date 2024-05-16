@@ -35,10 +35,10 @@ for resource in resources:
         n += 1
         print(f"Page {n}")
         response = requests.get(url, headers=headers)
-        
+
         if response.status_code != 200:
             raise Exception(f"Error {response.status_code}: {response.text}")
-        
+
         data = response.json()
         res0 += data["results"]
 
