@@ -1,1 +1,267 @@
-{}
+[
+    {
+        "code": "F3DC8A",
+        "name": "A Speaker",
+        "biography": null,
+        "submissions": [
+            "A8CD3F"
+        ],
+        "avatar": "https://pretalx.com/media/avatars/picture.jpg",
+        "answers": [
+            {
+                "id": 272244,
+                "question": {
+                    "id": 3406,
+                    "question": {
+                        "en": "Outline"
+                    }
+                },
+                "answer": "This is an outline",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null,
+                "options": []
+            },
+            {
+                "id": 272245,
+                "question": {
+                    "id": 3435,
+                    "question": {
+                        "en": "Country of residence"
+                    }
+                },
+                "answer": "Pythonland",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": []
+            },
+            {
+                "id": 272246,
+                "question": {
+                    "id": 3433,
+                    "question": {
+                        "en": "Are you under the age of 18 on July 8th, 2024?"
+                    }
+                },
+                "answer": "no",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": [
+                    {
+                        "id": 4543,
+                        "answer": {
+                            "en": "no"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 272247,
+                "question": {
+                    "id": 3434,
+                    "question": {
+                        "en": "Social (Github/Gitlab)"
+                    }
+                },
+                "answer": "https://github.com/F3DC8A",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": []
+            },
+            {
+                "id": 272248,
+                "question": {
+                    "id": 3415,
+                    "question": {
+                        "en": "Social (LinkedIn)"
+                    }
+                },
+                "answer": "https://www.linkedin.com/in/F3DC8A/",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": []
+            },
+            {
+                "id": 272249,
+                "question": {
+                    "id": 3420,
+                    "question": {
+                        "en": "My presentation can be delivered"
+                    }
+                },
+                "answer": "in-person at the conference venue",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null,
+                "options": [
+                    {
+                        "id": 4500,
+                        "answer": {
+                            "en": "in-person at the conference venue"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 272250,
+                "question": {
+                    "id": 3421,
+                    "question": {
+                        "en": "Public link to supporting material."
+                    }
+                },
+                "answer": "https://example.com/material",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null,
+                "options": []
+            },
+            {
+                "id": 272251,
+                "question": {
+                    "id": 3425,
+                    "question": {
+                        "en": "Do you identify as a member of an underrepresented group in computing."
+                    }
+                },
+                "answer": "no",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": [
+                    {
+                        "id": 4504,
+                        "answer": {
+                            "en": "no"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 272252,
+                "question": {
+                    "id": 3427,
+                    "question": {
+                        "en": "If yes, with which of the following do you identify with"
+                    }
+                },
+                "answer": "",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": []
+            },
+            {
+                "id": 272253,
+                "question": {
+                    "id": 3428,
+                    "question": {
+                        "en": "Position /Job"
+                    }
+                },
+                "answer": "EuroPython Enjoyer",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": []
+            },
+            {
+                "id": 272254,
+                "question": {
+                    "id": 3429,
+                    "question": {
+                        "en": "Are you planning to apply for Financial Aid?"
+                    }
+                },
+                "answer": "no",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null,
+                "options": [
+                    {
+                        "id": 4565,
+                        "answer": {
+                            "en": "no"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 272255,
+                "question": {
+                    "id": 3431,
+                    "question": {
+                        "en": "Company / Organization / Educational Institution"
+                    }
+                },
+                "answer": "A Company",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": []
+            },
+            {
+                "id": 272256,
+                "question": {
+                    "id": 3424,
+                    "question": {
+                        "en": "I have read and agree to the Speaker Release Agreement"
+                    }
+                },
+                "answer": "yes",
+                "answer_file": null,
+                "submission": null,
+                "review": null,
+                "person": "F3DC8A",
+                "options": [
+                    {
+                        "id": 4502,
+                        "answer": {
+                            "en": "yes"
+                        }
+                    }
+                ]
+            },
+            {
+                "id": 272257,
+                "question": {
+                    "id": 3412,
+                    "question": {
+                        "en": "Expected audience expertise"
+                    }
+                },
+                "answer": "Intermediate",
+                "answer_file": null,
+                "submission": "A8CD3F",
+                "review": null,
+                "person": null,
+                "options": [
+                    {
+                        "id": 4495,
+                        "answer": {
+                            "en": "Intermediate"
+                        }
+                    }
+                ]
+            }
+        ],
+        "email": "f3dc8a@example.com",
+        "availabilities": []
+    }
+]

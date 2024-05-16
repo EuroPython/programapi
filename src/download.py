@@ -1,21 +1,12 @@
 import json
-from datetime import datetime
-from pathlib import Path
-from pprint import pprint as pp
 
 import requests
 
-from config import conf
-
-
-class Config:
-    token = conf["pretalx-token"]
-    event = "europython-2024"
-
+from src.config import Config
 
 headers = {
     "Accept": "application/json, text/javascript",
-    "Authorization": f"Token {Config.token}",
+    "Authorization": f"Token {Config.token()}",
 }
 
 base_url = f"https://pretalx.com/api/events/{Config.event}/"
@@ -39,12 +30,16 @@ for resource in resources:
         n += 1
         print(f"Page {n}")
         response = requests.get(url, headers=headers)
+
+        if response.status_code != 200:
+            raise Exception(f"Error {response.status_code}: {response.text}")
+
         data = response.json()
         res0 += data["results"]
 
     filename = resource.split("?")[0]  # To get rid of "?questions"
     filename = f"{filename}_latest.json"
-    filepath = f"../data/raw/{Config.event}/{filename}"
+    filepath = Config.raw_path / filename
 
     with open(filepath, "w") as fd:
         json.dump(res0, fd)
