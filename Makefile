@@ -11,10 +11,10 @@ deps/install:
 install: deps/install
 
 download:
-	cd src && python download.py
+	python -m src.download
 
 transform:
-	cd src && python transform.py
+	python -m src.transform
 
 
 all: download transform

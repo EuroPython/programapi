@@ -1,13 +1,8 @@
 import json
-from pathlib import Path
 
 import requests
 
-try:
-    from config import Config
-except ImportError:
-    from src.config import Config
-
+from src.config import Config
 
 headers = {
     "Accept": "application/json, text/javascript",
@@ -44,7 +39,7 @@ for resource in resources:
 
     filename = resource.split("?")[0]  # To get rid of "?questions"
     filename = f"{filename}_latest.json"
-    filepath = Path.joinpath(Config.raw_path, filename)
+    filepath = Config.raw_path / filename
 
     with open(filepath, "w") as fd:
         json.dump(res0, fd)

@@ -1,15 +1,11 @@
 import json
 from datetime import datetime
-from pathlib import Path
 
 from pydantic import BaseModel, Field
 from pydantic.class_validators import root_validator
 from slugify import slugify
 
-try:
-    from config import Config
-except ImportError:
-    from src.config import Config
+from src.config import Config
 
 
 class SpeakerQuestion:
@@ -175,7 +171,7 @@ def parse_submissions() -> list[PretalxSubmission]:
     """
     Returns only confirmed talks
     """
-    with open(Path.joinpath(Config.raw_path, "submissions_latest.json")) as fd:
+    with open(Config.raw_path / "submissions_latest.json") as fd:
         js = json.load(fd)
         subs = []
         for item in js:
@@ -189,7 +185,7 @@ def parse_speakers() -> list[PretalxSpeaker]:
     """
     Returns only speakers with confirmed talks
     """
-    with open(Path.joinpath(Config.raw_path, "speakers_latest.json")) as fd:
+    with open(Config.raw_path / "speakers_latest.json") as fd:
         js = json.load(fd)
         speakers = []
         for item in js:
@@ -217,7 +213,7 @@ def publishable_speakers(accepted_proposals: set[str]) -> dict[str, PretalxSpeak
 
 
 def save_publishable_sessions():
-    path = Path.joinpath(Config.public_path, "sessions.json")
+    path = Config.public_path / "sessions.json"
 
     publishable = publishable_submissions()
 
@@ -227,7 +223,7 @@ def save_publishable_sessions():
 
 
 def save_publishable_speakers():
-    path = Path.joinpath(Config.public_path, "speakers.json")
+    path = Config.public_path / "speakers.json"
 
     publishable = publishable_submissions()
     speakers = publishable_speakers(publishable.keys())
