@@ -11,7 +11,7 @@ except ImportError:
 
 headers = {
     "Accept": "application/json, text/javascript",
-    "Authorization": f"Token {Config.token}",
+    "Authorization": f"Token {Config.token()}",
 }
 
 base_url = f"https://pretalx.com/api/events/{Config.event}/"
@@ -35,6 +35,10 @@ for resource in resources:
         n += 1
         print(f"Page {n}")
         response = requests.get(url, headers=headers)
+        
+        if response.status_code != 200:
+            raise Exception(f"Error {response.status_code}: {response.text}")
+        
         data = response.json()
         res0 += data["results"]
 

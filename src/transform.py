@@ -242,5 +242,7 @@ assert len(set(s.slug for s in publishable_submissions().values())) == len(
 )
 
 if __name__ == "__main__":
+    print("Saving publishable data...")
     save_publishable_sessions()
     save_publishable_speakers()
+    print("Done")
