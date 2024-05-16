@@ -1,5 +1,6 @@
 import json
-from transform import PretalxSubmission
+
+from src.transform import PretalxSubmission
 
 with open("./data/examples/pretalx/submissions.json") as fd:
     pretalx_submissions = json.load(fd)
