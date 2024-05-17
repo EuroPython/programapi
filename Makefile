@@ -21,3 +21,7 @@ all: download transform
 
 test:
 	PYTHONPATH="src" pytest
+
+pre-commit:
+	pre-commit install
+	pre-commit run --all-files
