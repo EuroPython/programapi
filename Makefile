@@ -20,7 +20,7 @@ transform:
 all: download transform
 
 test:
-	PYTHONPATH="src" python -m unittest;
+	PYTHONPATH="src" pytest
 
 pre-commit:
 	pre-commit install
