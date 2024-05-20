@@ -1,8 +1,7 @@
 import json
 from datetime import datetime
 
-from pydantic import BaseModel, Field
-from pydantic.class_validators import root_validator
+from pydantic import BaseModel, Field, model_validator
 from slugify import slugify
 
 from src.config import Config
@@ -35,7 +34,8 @@ class PretalxAnswer(BaseModel):
     submission_id: str | None
     speaker_id: str | None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def extract(cls, values):
         values["question_text"] = values["question"]["question"]["en"]
         values["answer_text"] = values["answer"]
@@ -60,11 +60,12 @@ class PretalxSpeaker(BaseModel):
     twitter: str | None = None
     mastodon: str | None = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def extract(cls, values):
         values["slug"] = slugify(values["name"])
 
-        answers = [PretalxAnswer.parse_obj(ans) for ans in values["answers"]]
+        answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
         for answer in answers:
             if answer.question_text == SpeakerQuestion.affiliation:
@@ -107,8 +108,7 @@ class PretalxSubmission(BaseModel):
     start: datetime | None = None
     end: datetime | None = None
 
-    # TODO: once we have schedule data then we can prefill those in the code
-    # here
+    # TODO: once we have schedule data then we can prefill those in the code here
     talks_in_parallel: list[str] | None = None
     talks_after: list[str] | None = None
     next_talk_code: str | None = None
@@ -116,7 +116,8 @@ class PretalxSubmission(BaseModel):
 
     website_url: str | None = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def extract(cls, values):
         # # SubmissionType and Track have localised names. For this project we
         # # only care about their english versions, so we can extract them here
@@ -132,7 +133,7 @@ class PretalxSubmission(BaseModel):
 
         values["speakers"] = sorted([s["code"] for s in values["speakers"]])
 
-        answers = [PretalxAnswer.parse_obj(ans) for ans in values["answers"]]
+        answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
         for answer in answers:
             # TODO if we need any other questions
@@ -147,6 +148,10 @@ class PretalxSubmission(BaseModel):
 
             if answer.question_text == SubmissionQuestion.level:
                 values["level"] = answer.answer_text.lower()
+
+        # Convert duration to string for model validation
+        if isinstance(values["duration"], int):
+            values["duration"] = str(values["duration"])
 
         slug = slugify(values["title"])
         values["slug"] = slug
@@ -173,11 +178,7 @@ def parse_submissions() -> list[PretalxSubmission]:
     """
     with open(Config.raw_path / "submissions_latest.json") as fd:
         js = json.load(fd)
-        subs = []
-        for item in js:
-            sub = PretalxSubmission.parse_obj(item)
-            subs.append(sub)
-
+        subs = [PretalxSubmission.model_validate(item) for item in js]
     return subs
 
 
@@ -187,11 +188,7 @@ def parse_speakers() -> list[PretalxSpeaker]:
     """
     with open(Config.raw_path / "speakers_latest.json") as fd:
         js = json.load(fd)
-        speakers = []
-        for item in js:
-            speaker = PretalxSpeaker.parse_obj(item)
-            speakers.append(speaker)
-
+        speakers = [PretalxSpeaker.model_validate(item) for item in js]
     return speakers
 
 
@@ -217,7 +214,7 @@ def save_publishable_sessions():
 
     publishable = publishable_submissions()
 
-    data = {k: v.dict() for k, v in publishable.items()}
+    data = {k: v.model_dump() for k, v in publishable.items()}
     with open(path, "w") as fd:
         json.dump(data, fd, indent=2)
 
@@ -228,7 +225,7 @@ def save_publishable_speakers():
     publishable = publishable_submissions()
     speakers = publishable_speakers(publishable.keys())
 
-    data = {k: v.dict() for k, v in speakers.items()}
+    data = {k: v.model_dump() for k, v in speakers.items()}
     with open(path, "w") as fd:
         json.dump(data, fd, indent=2)
 
