@@ -20,13 +20,7 @@ transform:
 all: download transform
 
 test:
-	if pytest -v; then \
-		PYTHONPATH="src" pytest; \
-	else \
-		echo "pytest is not found, installing pytest"; \
-		pip install pytest; \
-		PYTHONPATH="src" pytest; \
-	fi
+	PYTHONPATH="src" python -m unittest;
 
 pre-commit:
 	pre-commit install
