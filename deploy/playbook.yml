@@ -77,6 +77,12 @@
         src: ./init-letsencrypt.sh.j2
         dest: /srv/init-letsencrypt.sh
 
+    - name: Sync pretalx data every 5 minutes
+      ansible.builtin.cron:
+        name: Sync pretalx data
+        minute: "*/5"
+        job: "cd /srv && docker compose run app make all"
+
     #- name: Start Docker compose
     #  shell: "cd /srv && docker compose up -d"
     #  docker compose up -d --build --force-recreate
