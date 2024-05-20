@@ -1,6 +1,4 @@
 pdbpp
-black
-isort
 pytest
 pre-commit
 
