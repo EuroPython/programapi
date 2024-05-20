@@ -233,11 +233,11 @@ def save_publishable_speakers():
         json.dump(data, fd, indent=2)
 
 
-assert len(set(s.slug for s in publishable_submissions().values())) == len(
-    publishable_submissions()
-)
-
 if __name__ == "__main__":
+    print("Checking for duplicate slugs...")
+    assert len(set(s.slug for s in publishable_submissions().values())) == len(
+        publishable_submissions()
+    )
     print("Saving publishable data...")
     save_publishable_sessions()
     save_publishable_speakers()
