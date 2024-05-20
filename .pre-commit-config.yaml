@@ -18,6 +18,13 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
 
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+      - id: ruff-format
+        args: ["--check"]
+
   - repo: local
     hooks:
       - id: pytest
