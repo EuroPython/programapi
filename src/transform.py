@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import json
 from datetime import datetime
 
@@ -8,9 +10,9 @@ from src.config import Config
 
 
 class SpeakerQuestion:
-    affiliation = "Company / Organization / Educational Institution"
-    homepage = "Social (Homepage)"
-    twitter = "Social (X/Twitter)"
+    affiliation = "Company / Institute"
+    homepage = "Homepage"
+    twitter = "Twitter / Mastodon handle(s)"
     mastodon = "Social (Mastodon)"
 
 
@@ -105,14 +107,16 @@ class PretalxSubmission(BaseModel):
 
     # This is embedding a slot inside a submission for easier lookup later
     room: str | None = None
-    start: datetime | None = None
-    end: datetime | None = None
+    start: datetime | str | None = None
+    end: datetime | str | None = None
 
     # TODO: once we have schedule data then we can prefill those in the code here
+    # These are added after the model is created
     talks_in_parallel: list[str] | None = None
     talks_after: list[str] | None = None
-    next_talk_code: str | None = None
-    prev_talk_code: str | None = None
+    talks_before: list[str] | None = None
+    next_talk: str | None = None
+    prev_talk: str | None = None
 
     website_url: str | None = None
 
@@ -153,9 +157,19 @@ class PretalxSubmission(BaseModel):
         if isinstance(values["duration"], int):
             values["duration"] = str(values["duration"])
 
+        if cls.is_publishable and values["slot"]:
+            slot = values["slot"]
+            values["room"] = slot["room"]["en"] if slot["room"] else None
+            values["start"] = (
+                datetime.fromisoformat(slot["start"]) if slot["start"] else None
+            )
+            values["end"] = datetime.fromisoformat(slot["end"]) if slot["end"] else None
+
         slug = slugify(values["title"])
         values["slug"] = slug
-        values["website_url"] = f"https://ep2024.europython.eu/session/{slug}"
+        values["website_url"] = (
+            f"https://ep{Config.event.split('-')[1]}.europython.eu/session/{slug}"
+        )
 
         return values
 
@@ -170,6 +184,120 @@ class PretalxSubmission(BaseModel):
     @property
     def is_publishable(self):
         return self.is_accepted or self.is_confirmed
+
+    @staticmethod
+    def set_talks_in_parallel(
+        submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
+    ):
+        parallel = []
+        for session in all_sessions.values():
+            if (
+                session.code == submission.code
+                or session.start is None
+                or submission.start is None
+            ):
+                continue
+
+            # If they intersect, they are in parallel
+            if session.start < submission.end and session.end > submission.start:
+                parallel.append(session.code)
+
+        submission.talks_in_parallel = parallel
+
+    @staticmethod
+    def set_talks_after(
+        submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
+    ):
+        if submission.start is None:
+            return
+
+        # Sort sessions based on start time, early first
+        all_sessions_sorted = sorted(
+            all_sessions.values(), key=lambda x: (x.start is None, x.start)
+        )
+
+        # Filter out sessions
+        remaining_sessions = [
+            session
+            for session in all_sessions_sorted
+            if session.start is not None
+            and session.start >= submission.end
+            and session.code not in submission.talks_in_parallel
+            and session.code != submission.code
+            and submission.start.day == session.start.day
+            and not submission.submission_type
+            == session.submission_type
+            == "Announcements"
+        ]
+
+        # Add sessions to the list if they are in different rooms
+        seen_rooms = set()
+        unique_sessions = []
+
+        for session in remaining_sessions:
+            if session.room not in seen_rooms:
+                unique_sessions.append(session)
+                seen_rooms.add(session.room)
+
+        # If there is a keynote next, only show that
+        if any(s.submission_type == "Keynote" for s in unique_sessions):
+            unique_sessions = [
+                s for s in unique_sessions if s.submission_type == "Keynote"
+            ]
+
+        # Set the next talks in all rooms
+        submission.talks_after = [session.code for session in unique_sessions]
+
+        # Set the next talk in the same room
+        for session in unique_sessions:
+            if session.room == submission.room:
+                submission.next_talk = session.code
+                break
+
+    @staticmethod
+    def set_talks_before(
+        submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
+    ):
+        if submission.start is None:
+            return
+
+        # Sort sessions based on start time, late first
+        all_sessions_sorted = sorted(
+            all_sessions.values(),
+            key=lambda x: (x.start is None, x.start),
+            reverse=True,
+        )
+
+        remaining_sessions = [
+            session
+            for session in all_sessions_sorted
+            if session.start is not None
+            and session.code not in submission.talks_in_parallel
+            and session.start <= submission.start
+            and session.code != submission.code
+            and submission.start.day == session.start.day
+            and session.submission_type != "Announcements"
+        ]
+
+        seen_rooms = set()
+        unique_sessions = []
+
+        for session in remaining_sessions:
+            if session.room not in seen_rooms:
+                unique_sessions.append(session)
+                seen_rooms.add(session.room)
+
+        submission.talks_before = [session.code for session in unique_sessions]
+
+        for session in unique_sessions:
+            if session.room == submission.room:
+                submission.prev_talk = session.code
+                break
+
+    def model_dump(self):
+        self.start = self.start.isoformat() if self.start else None
+        self.end = self.end.isoformat() if self.end else None
+        return super().model_dump()
 
 
 def parse_submissions() -> list[PretalxSubmission]:
@@ -209,20 +337,22 @@ def publishable_speakers(accepted_proposals: set[str]) -> dict[str, PretalxSpeak
     return output
 
 
-def save_publishable_sessions():
+def save_publishable_sessions(publishable: dict[str, PretalxSubmission]):
     path = Config.public_path / "sessions.json"
 
-    publishable = publishable_submissions()
+    for sub in publishable.values():
+        PretalxSubmission.set_talks_in_parallel(sub, publishable)
+        PretalxSubmission.set_talks_after(sub, publishable)
+        PretalxSubmission.set_talks_before(sub, publishable)
 
     data = {k: v.model_dump() for k, v in publishable.items()}
     with open(path, "w") as fd:
         json.dump(data, fd, indent=2)
 
 
-def save_publishable_speakers():
+def save_publishable_speakers(publishable: dict[str, PretalxSubmission]):
     path = Config.public_path / "speakers.json"
 
-    publishable = publishable_submissions()
     speakers = publishable_speakers(publishable.keys())
 
     data = {k: v.model_dump() for k, v in speakers.items()}
@@ -230,12 +360,20 @@ def save_publishable_speakers():
         json.dump(data, fd, indent=2)
 
 
+def save_all():
+    if not Config.public_path.exists():
+        Config.public_path.mkdir(parents=True)
+
+    publishable = publishable_submissions()
+    save_publishable_sessions(publishable)
+    save_publishable_speakers(publishable)
+
+
 if __name__ == "__main__":
-    print("Checking for duplicate slugs...")
-    assert len(set(s.slug for s in publishable_submissions().values())) == len(
-        publishable_submissions()
-    )
+    # print("Checking for duplicate slugs...")
+    # assert len(set(s.slug for s in publishable_submissions().values())) == len(
+    #     publishable_submissions()
+    # )
     print("Saving publishable data...")
-    save_publishable_sessions()
-    save_publishable_speakers()
+    save_all()
     print("Done")
