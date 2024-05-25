@@ -32,9 +32,9 @@ class SubmissionState:
 class PretalxAnswer(BaseModel):
     question_text: str
     answer_text: str
-    answer_file: str | None
-    submission_id: str | None
-    speaker_id: str | None
+    answer_file: str | None = None
+    submission_id: str | None = None
+    speaker_id: str | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -50,8 +50,8 @@ class PretalxAnswer(BaseModel):
 class PretalxSpeaker(BaseModel):
     code: str
     name: str
-    biography: str | None
-    avatar: str | None
+    biography: str | None = None
+    avatar: str | None = None
     slug: str
     answers: list[PretalxAnswer] = Field(..., exclude=True)
     submissions: list[str]
@@ -95,7 +95,7 @@ class PretalxSubmission(BaseModel):
     speakers: list[str]  # We only want the code, not the full info
     submission_type: str
     slug: str
-    track: str | None
+    track: str | None = None
     state: str
     abstract: str
     answers: list[PretalxAnswer] = Field(..., exclude=True)
@@ -159,11 +159,13 @@ class PretalxSubmission(BaseModel):
 
         if cls.is_publishable and values["slot"]:
             slot = values["slot"]
-            values["room"] = slot["room"]["en"] if slot["room"] else None
-            values["start"] = (
-                datetime.fromisoformat(slot["start"]) if slot["start"] else None
-            )
-            values["end"] = datetime.fromisoformat(slot["end"]) if slot["end"] else None
+
+            if isinstance(slot["room"], dict):
+                values["room"] = slot["room"]["en"]
+
+            if slot["start"]:
+                values["start"] = datetime.fromisoformat(slot["start"])
+                values["end"] = datetime.fromisoformat(slot["end"])
 
         slug = slugify(values["title"])
         values["slug"] = slug
@@ -335,7 +337,7 @@ def save_publishable_sessions(publishable: dict[str, PretalxSubmission]):
     path = Config.public_path / "sessions.json"
 
     for sub in publishable.values():
-        if sub.start is None:
+        if sub.start is not None:
             PretalxSubmission.set_talks_in_parallel(sub, publishable)
             PretalxSubmission.set_talks_after(sub, publishable)
             PretalxSubmission.set_talks_before(sub, publishable)
@@ -365,6 +367,7 @@ def save_all():
 
 
 if __name__ == "__main__":
+    print(f"Transforming {Config.event} data...")
     print("Checking for duplicate slugs...")
     assert len(set(s.slug for s in publishable_submissions().values())) == len(
         publishable_submissions()
