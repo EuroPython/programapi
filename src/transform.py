@@ -208,9 +208,6 @@ class PretalxSubmission(BaseModel):
     def set_talks_after(
         submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
     ):
-        if submission.start is None:
-            return
-
         # Sort sessions based on start time, early first
         all_sessions_sorted = sorted(
             all_sessions.values(), key=lambda x: (x.start is None, x.start)
@@ -258,9 +255,6 @@ class PretalxSubmission(BaseModel):
     def set_talks_before(
         submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
     ):
-        if submission.start is None:
-            return
-
         # Sort sessions based on start time, late first
         all_sessions_sorted = sorted(
             all_sessions.values(),
@@ -341,9 +335,10 @@ def save_publishable_sessions(publishable: dict[str, PretalxSubmission]):
     path = Config.public_path / "sessions.json"
 
     for sub in publishable.values():
-        PretalxSubmission.set_talks_in_parallel(sub, publishable)
-        PretalxSubmission.set_talks_after(sub, publishable)
-        PretalxSubmission.set_talks_before(sub, publishable)
+        if sub.start is None:
+            PretalxSubmission.set_talks_in_parallel(sub, publishable)
+            PretalxSubmission.set_talks_after(sub, publishable)
+            PretalxSubmission.set_talks_before(sub, publishable)
 
     data = {k: v.model_dump() for k, v in publishable.items()}
     with open(path, "w") as fd:
