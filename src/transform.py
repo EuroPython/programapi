@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from datetime import datetime
 
 from pydantic import BaseModel, Field, model_validator
@@ -357,21 +358,49 @@ def save_publishable_speakers(publishable: dict[str, PretalxSubmission]):
         json.dump(data, fd, indent=2)
 
 
-def save_all():
+def save_all(all_sessions: dict[str, PretalxSubmission]):
     if not Config.public_path.exists():
         Config.public_path.mkdir(parents=True)
 
-    publishable = publishable_submissions()
-    save_publishable_sessions(publishable)
-    save_publishable_speakers(publishable)
+    save_publishable_sessions(all_sessions)
+    save_publishable_speakers(all_sessions)
+
+
+def check_duplicate_slugs(all_sessions: dict[str, PretalxSubmission]) -> bool:
+    all_speakers = publishable_speakers(all_sessions.keys())
+
+    session_slugs = [s.slug for s in all_sessions.values()]
+    speaker_slugs = [s.slug for s in all_speakers.values()]
+
+    session_duplicates = [
+        slug for slug in set(session_slugs) if session_slugs.count(slug) > 1
+    ]
+    speaker_duplicates = [
+        slug for slug in set(speaker_slugs) if speaker_slugs.count(slug) > 1
+    ]
+
+    if session_duplicates or speaker_duplicates:
+        print("Found duplicate slugs:")
+        for slug in session_duplicates:
+            print(f"Session: {slug}")
+        for slug in speaker_duplicates:
+            print(f"Speaker: {slug}")
+        return False
+    return True
 
 
 if __name__ == "__main__":
     print(f"Transforming {Config.event} data...")
     print("Checking for duplicate slugs...")
-    assert len(set(s.slug for s in publishable_submissions().values())) == len(
-        publishable_submissions()
-    )
+
+    all_sessions = publishable_submissions()
+
+    if not check_duplicate_slugs(all_sessions) and (
+        len(sys.argv) <= 1 or sys.argv[1] != "--allow-dupes"
+    ):
+        print("Exiting. Use ``make transform ALLOW_DUPES=true`` to continue.")
+        sys.exit(1)
+
     print("Saving publishable data...")
-    save_all()
+    save_all(all_sessions)
     print("Done")
