@@ -19,8 +19,9 @@
         "end": null,
         "talks_in_parallel": null,
         "talks_after": null,
-        "next_talk_code": null,
-        "prev_talk_code": null,
+        "talks_before": null,
+        "next_talk": null,
+        "prev_talk": null,
         "website_url": "https://ep2024.europython.eu/session/this-is-a-test-talk-from-a-test-speaker-about-a-test-topic"
     },
     "B8CD4F": {
@@ -43,8 +44,9 @@
         "end": null,
         "talks_in_parallel": null,
         "talks_after": null,
-        "next_talk_code": null,
-        "prev_talk_code": null,
+        "talks_before": null,
+        "next_talk": null,
+        "prev_talk": null,
         "website_url": "https://ep2024.europython.eu/session/a-talk-with-shorter-title"
     }
 }

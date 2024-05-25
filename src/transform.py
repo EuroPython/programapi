@@ -10,9 +10,9 @@ from src.config import Config
 
 
 class SpeakerQuestion:
-    affiliation = "Company / Institute"
-    homepage = "Homepage"
-    twitter = "Twitter / Mastodon handle(s)"
+    affiliation = "Company / Organization / Educational Institution"
+    homepage = "Social (Homepage)"
+    twitter = "Social (X/Twitter)"
     mastodon = "Social (Mastodon)"
 
 
@@ -370,10 +370,10 @@ def save_all():
 
 
 if __name__ == "__main__":
-    # print("Checking for duplicate slugs...")
-    # assert len(set(s.slug for s in publishable_submissions().values())) == len(
-    #     publishable_submissions()
-    # )
+    print("Checking for duplicate slugs...")
+    assert len(set(s.slug for s in publishable_submissions().values())) == len(
+        publishable_submissions()
+    )
     print("Saving publishable data...")
     save_all()
     print("Done")

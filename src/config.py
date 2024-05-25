@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 class Config:
-    event = "europython-2023"
+    event = "europython-2024"
     project_root = Path(__file__).resolve().parents[1]
     raw_path = Path(f"{project_root}/data/raw/{event}")
     public_path = Path(f"{project_root}/data/public/{event}")
