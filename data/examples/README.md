@@ -1,4 +1,4 @@
-# Explaining the data
+# Explaining the output data
 
 **Note:** Some of the fields may be `null` or empty (`""`).
 
