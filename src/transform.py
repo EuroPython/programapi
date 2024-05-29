@@ -104,7 +104,7 @@ class PretalxSubmission(BaseModel):
     duration: str
 
     level: str = ""
-    delivery: str | None = ""
+    delivery: str = ""
 
     # This is embedding a slot inside a submission for easier lookup later
     room: str | None = None
@@ -119,7 +119,7 @@ class PretalxSubmission(BaseModel):
     next_talk: str | None = None
     prev_talk: str | None = None
 
-    website_url: str | None = None
+    website_url: str
 
     @model_validator(mode="before")
     @classmethod
