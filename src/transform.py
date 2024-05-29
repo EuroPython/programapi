@@ -108,8 +108,8 @@ class PretalxSubmission(BaseModel):
 
     # This is embedding a slot inside a submission for easier lookup later
     room: str | None = None
-    start: datetime | str | None = None
-    end: datetime | str | None = None
+    start: datetime | None = None
+    end: datetime | None = None
 
     # TODO: once we have schedule data then we can prefill those in the code here
     # These are added after the model is created
@@ -291,11 +291,6 @@ class PretalxSubmission(BaseModel):
                 submission.prev_talk = session.code
                 break
 
-    def model_dump(self):
-        self.start = self.start.isoformat() if self.start else None
-        self.end = self.end.isoformat() if self.end else None
-        return super().model_dump()
-
 
 def parse_submissions() -> list[PretalxSubmission]:
     """
@@ -343,7 +338,7 @@ def save_publishable_sessions(publishable: dict[str, PretalxSubmission]):
             PretalxSubmission.set_talks_after(sub, publishable)
             PretalxSubmission.set_talks_before(sub, publishable)
 
-    data = {k: v.model_dump() for k, v in publishable.items()}
+    data = {k: json.loads(v.model_dump_json()) for k, v in publishable.items()}
     with open(path, "w") as fd:
         json.dump(data, fd, indent=2)
 
