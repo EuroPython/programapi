@@ -1,0 +1,36 @@
+name: Update dependencies
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * MON"
+
+jobs:
+  update_deps:
+    name: Update dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Update dependencies
+        run: make deps/update
+
+      - name: Run pytest
+        run: make test
+
+      - name: Open pull request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          commit-message: "🔄 Update dependencies"
+          title: "🔄 Update dependencies"
+          body: "🔄 Update dependencies"
+          branch: "update-deps"
+          labels: "dependencies"

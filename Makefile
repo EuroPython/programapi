@@ -1,12 +1,16 @@
-
 deps/pre:
 	pip install pip-tools
+
+deps/clean:
+	rm -f requirements.txt
 
 deps/compile:
 	pip-compile
 
 deps/install:
 	pip-sync
+
+deps/update: deps/pre deps/clean deps/compile deps/install
 
 install: deps/install
 
