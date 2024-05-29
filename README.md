@@ -1,6 +1,6 @@
 # programapi
 
-This project processes, saves, and serves the static JSON files containing details of accepted speakers and submissions via an API.
+This project downloads, processes, saves, and serves the static JSON files containing details of accepted speakers and submissions via an API.
 
 What this project does step-by-step:
 
@@ -25,7 +25,7 @@ What this project does step-by-step:
 
 ## API
 
-The API is served at ``programapi24.europython.eu``. It has two endpoints:
+The API is served at ``programapi24.europython.eu/2024``. It has two endpoints (for now):
 
 - ``/speakers.json``: Returns the list of confirmed speakers.
 - ``/sessions.json``: Returns the list of confirmed sessions.
