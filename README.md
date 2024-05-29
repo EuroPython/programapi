@@ -15,6 +15,10 @@ What this project does step-by-step:
 3. Install the dependencies: ``make deps/install``
 4. Set up ``pre-commit``: ``make pre-commit``
 
+## Configuration
+
+You can change the event in the [``config.py``](src/config.py) file. It is set to ``europython-2024`` right now.
+
 ## Usage
 
 - Run the whole process: ``make all``
