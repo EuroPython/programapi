@@ -27,7 +27,7 @@ jobs:
         run: make test
 
       - name: Open pull request
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "🔄 Update dependencies"
           title: "🔄 Update dependencies"
