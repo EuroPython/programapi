@@ -4,7 +4,7 @@ import json
 import sys
 from datetime import datetime
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from slugify import slugify
 
 from src.config import Config
@@ -15,6 +15,8 @@ class SpeakerQuestion:
     homepage = "Social (Homepage)"
     twitter = "Social (X/Twitter)"
     mastodon = "Social (Mastodon)"
+    linkedin = "Social (LinkedIn)"
+    gitx = "Social (Github/Gitlab)"
 
 
 class SubmissionQuestion:
@@ -48,11 +50,24 @@ class PretalxAnswer(BaseModel):
         return values
 
 
+class PretalxSlot(BaseModel):
+    room: str | None = None
+    start: datetime | None = None
+    end: datetime | None = None
+
+    @field_validator("room", mode="before")
+    @classmethod
+    def handle_localized(cls, v):
+        if isinstance(v, dict):
+            return v.get("en")
+        return v
+
+
 class PretalxSpeaker(BaseModel):
     code: str
     name: str
     biography: str | None = None
-    avatar: str | None = None
+    avatar: str
     slug: str
     answers: list[PretalxAnswer] = Field(..., exclude=True)
     submissions: list[str]
@@ -60,12 +75,14 @@ class PretalxSpeaker(BaseModel):
     # Extracted
     affiliation: str | None = None
     homepage: str | None = None
-    twitter: str | None = None
-    mastodon: str | None = None
+    twitter_url: str | None = None
+    mastodon_url: str | None = None
+    linkedin_url: str | None = None
+    gitx_url: str | None = None
 
     @model_validator(mode="before")
     @classmethod
-    def extract(cls, values):
+    def extract(cls, values) -> dict:
         values["slug"] = slugify(values["name"])
 
         answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
@@ -77,15 +94,47 @@ class PretalxSpeaker(BaseModel):
             if answer.question_text == SpeakerQuestion.homepage:
                 values["homepage"] = answer.answer_text
 
-            # NOTE: in practice the format of the data here is different,
-            # depending on the speaker. We could fix this here by parsing the
-            # the answer_text to some standardised format (either @handle or
-            # https://twitter.com/handle url, etc)
+            # Handle handles (pun intended)
             if answer.question_text == SpeakerQuestion.twitter:
-                values["twitter"] = answer.answer_text
+                twitter_url = answer.answer_text.strip().split()[0]
 
+                if twitter_url.startswith("@"):
+                    twitter_url = f"https://x.com/{twitter_url[1:]}"
+                elif not twitter_url.startswith(("https://", "http://", "www.")):
+                    twitter_url = f"https://x.com/{twitter_url}"
+                else:
+                    twitter_url = f"https://{twitter_url.removeprefix('https://').removeprefix('http://')}"
+
+                values["twitter_url"] = twitter_url.split("?")[0]
+
+            # If it's like @user@instance, we need to convert it to a URL
             if answer.question_text == SpeakerQuestion.mastodon:
-                values["mastodon"] = answer.answer_text
+                mastodon_url = answer.answer_text.strip().split()[0]
+
+                if (
+                    not mastodon_url.startswith(("https://", "http://"))
+                    and mastodon_url.count("@") == 2
+                ):
+                    mastodon_url = f"https://{mastodon_url.split('@')[2]}/@{mastodon_url.split('@')[1]}"
+                else:
+                    mastodon_url = f"https://{mastodon_url.removeprefix('https://').removeprefix('http://')}"
+
+                values["mastodon_url"] = mastodon_url.split("?")[0]
+
+            if answer.question_text == SpeakerQuestion.linkedin:
+                linkedin_url = answer.answer_text.strip().split()[0]
+
+                if linkedin_url.startswith("in/"):
+                    linkedin_url = f"https://linkedin.com/{linkedin_url}"
+                elif not linkedin_url.startswith(("https://", "http://", "www.")):
+                    linkedin_url = f"https://linkedin.com/in/{linkedin_url}"
+                else:
+                    linkedin_url = f"https://{linkedin_url.removeprefix('https://').removeprefix('http://')}"
+
+                values["linkedin_url"] = linkedin_url.split("?")[0]
+
+            if answer.question_text == SpeakerQuestion.gitx:
+                values["gitx_url"] = answer.answer_text.strip().split()[0]
 
         return values
 
@@ -100,6 +149,7 @@ class PretalxSubmission(BaseModel):
     state: str
     abstract: str
     answers: list[PretalxAnswer] = Field(..., exclude=True)
+    slot: PretalxSlot | None = Field(..., exclude=True)
     tweet: str = ""
     duration: str
 
@@ -121,23 +171,24 @@ class PretalxSubmission(BaseModel):
 
     website_url: str
 
+    @field_validator("submission_type", "track", mode="before")
+    @classmethod
+    def handle_localized(cls, v) -> str:
+        if isinstance(v, dict):
+            return v.get("en")
+        return v
+
+    @field_validator("duration", mode="before")
+    @classmethod
+    def duration_to_string(cls, v) -> str:
+        if isinstance(v, int):
+            return str(v)
+        return v
+
     @model_validator(mode="before")
     @classmethod
-    def extract(cls, values):
-        # # SubmissionType and Track have localised names. For this project we
-        # # only care about their english versions, so we can extract them here
-        for field in ["submission_type", "track"]:
-            if values[field] is None:
-                continue
-            else:
-                # In 2024 some of those are localised, and some are not.
-                # Instead of figuring out why and fixing the data, there's this
-                # hack:
-                if isinstance(values[field], dict):
-                    values[field] = values[field]["en"]
-
+    def extract(cls, values) -> dict:
         values["speakers"] = sorted([s["code"] for s in values["speakers"]])
-
         answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
         for answer in answers:
@@ -154,19 +205,11 @@ class PretalxSubmission(BaseModel):
             if answer.question_text == SubmissionQuestion.level:
                 values["level"] = answer.answer_text.lower()
 
-        # Convert duration to string for model validation
-        if isinstance(values["duration"], int):
-            values["duration"] = str(values["duration"])
-
-        if cls.is_publishable and values["slot"]:
-            slot = values["slot"]
-
-            if isinstance(slot["room"], dict):
-                values["room"] = slot["room"]["en"]
-
-            if slot["start"]:
-                values["start"] = datetime.fromisoformat(slot["start"])
-                values["end"] = datetime.fromisoformat(slot["end"])
+        if values.get("slot"):
+            slot = PretalxSlot.model_validate(values["slot"])
+            values["room"] = slot.room
+            values["start"] = slot.start
+            values["end"] = slot.end
 
         slug = slugify(values["title"])
         values["slug"] = slug
@@ -177,21 +220,21 @@ class PretalxSubmission(BaseModel):
         return values
 
     @property
-    def is_accepted(self):
+    def is_accepted(self) -> bool:
         return self.state == SubmissionState.accepted
 
     @property
-    def is_confirmed(self):
+    def is_confirmed(self) -> bool:
         return self.state == SubmissionState.confirmed
 
     @property
-    def is_publishable(self):
+    def is_publishable(self) -> bool:
         return self.is_accepted or self.is_confirmed
 
     @staticmethod
     def set_talks_in_parallel(
         submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
-    ):
+    ) -> None:
         parallel = []
         for session in all_sessions.values():
             if (
@@ -210,7 +253,7 @@ class PretalxSubmission(BaseModel):
     @staticmethod
     def set_talks_after(
         submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
-    ):
+    ) -> None:
         # Sort sessions based on start time, early first
         all_sessions_sorted = sorted(
             all_sessions.values(), key=lambda x: (x.start is None, x.start)
@@ -248,16 +291,16 @@ class PretalxSubmission(BaseModel):
         # Set the next talks in all rooms
         submission.talks_after = [session.code for session in unique_sessions]
 
-        # Set the next talk in the same room
+        # Set the next talk in the same room, or a keynote
         for session in unique_sessions:
-            if session.room == submission.room:
+            if session.room == submission.room or session.submission_type == "Keynote":
                 submission.next_talk = session.code
                 break
 
     @staticmethod
     def set_talks_before(
         submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
-    ):
+    ) -> None:
         # Sort sessions based on start time, late first
         all_sessions_sorted = sorted(
             all_sessions.values(),

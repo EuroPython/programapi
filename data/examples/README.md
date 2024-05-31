@@ -52,29 +52,29 @@
 
 The fields are as follows:
 
-| Key                | Type                              | Notes                                                         |
-|--------------------|-----------------------------------|---------------------------------------------------------------|
-| `code`             | `string`                          | Unique identifier for the session                             |
-| `title`            | `string`                          | Title of the session                                          |
-| `speakers`         | `list[string]`                    | List of codes of the speakers                                 |
-| `submission_type`  | `string`                          | Type of the session (e.g. Talk, Workshop, Poster, etc.)       |
-| `slug`             | `string`                          | URL-friendly version of the title                             |
-| `track`            | `string` \| `null`                | Track of the session (e.g. PyData, Web, etc.)                 |
-| `state`            | `string`                          | State of the session (e.g. confirmed, canceled, etc.)         |
-| `abstract`         | `string`                          | Abstract of the session                                       |
-| `tweet`            | `string`                          | Tweet-length description of the session                       |
-| `duration`         | `string`                          | Duration of the session in minutes                            |
-| `level`            | `string`                          | Level of the session (e.g. beginner, intermediate, advanced)  |
-| `delivery`         | `string`                          | Delivery mode of the session (e.g. in-person, remote)         |
-| `room`             | `string` \| `null`                | Room where the session will be held                           |
-| `start`            | `datetime (ISO format)` \| `null` | Start time of the session                                     |
-| `end`              | `datetime (ISO format)` \| `null` | End time of the session                                       |
-| `talks_in_parallel`| `list[string]` \| `null`          | List of codes of sessions happening in parallel               |
-| `talks_after`      | `list[string]` \| `null`          | List of codes of sessions happening after this session        |
-| `talks_before`     | `list[string]` \| `null`          | List of codes of sessions happening before this session       |
-| `next_talk`        | `string` \| `null`                | Code of the next session in the same room                     |
-| `prev_talk`        | `string` \| `null`                | Code of the previous session in the same room                 |
-| `website_url`      | `string`                          | URL of the session on the conference website                  |
+| Key                 | Type                              | Notes                                                         |
+|---------------------|-----------------------------------|---------------------------------------------------------------|
+| `code`              | `string`                          | Unique identifier for the session                             |
+| `title`             | `string`                          | Title of the session                                          |
+| `speakers`          | `list[string]`                    | List of codes of the speakers                                 |
+| `submission_type`   | `string`                          | Type of the session (e.g. Talk, Workshop, Poster, etc.)       |
+| `slug`              | `string`                          | URL-friendly version of the title                             |
+| `track`             | `string` \| `null`                | Track of the session (e.g. PyData, Web, etc.)                 |
+| `state`             | `string`                          | State of the session (e.g. confirmed, canceled, etc.)         |
+| `abstract`          | `string`                          | Abstract of the session                                       |
+| `tweet`             | `string`                          | Tweet-length description of the session                       |
+| `duration`          | `string`                          | Duration of the session in minutes                            |
+| `level`             | `string`                          | Level of the session (e.g. beginner, intermediate, advanced)  |
+| `delivery`          | `string`                          | Delivery mode of the session (e.g. in-person, remote)         |
+| `room`              | `string` \| `null`                | Room where the session will be held                           |
+| `start`             | `datetime (ISO format)` \| `null` | Start time of the session                                     |
+| `end`               | `datetime (ISO format)` \| `null` | End time of the session                                       |
+| `talks_in_parallel` | `list[string]` \| `null`          | List of codes of sessions happening in parallel               |
+| `talks_after`       | `list[string]` \| `null`          | List of codes of sessions happening after this session        |
+| `talks_before`      | `list[string]` \| `null`          | List of codes of sessions happening before this session       |
+| `next_talk`         | `string` \| `null`                | Code of the next session in the same room                     |
+| `prev_talk`         | `string` \| `null`                | Code of the previous session in the same room                 |
+| `website_url`       | `string`                          | URL of the session on the conference website                  |
 
 &nbsp;
 
@@ -97,8 +97,10 @@ The fields are as follows:
     ],
     "affiliation": "A Company",
     "homepage": "https://example.com",
-    "twitter": "example",
-    "mastodon": "example"
+    "gitx_url": "https://github.com/B4D5E6",
+    "linkedin_url": "https://www.linkedin.com/in/B4D5E6",
+    "mastodon_url": "https://mastodon.social/@B4D5E6",
+    "twitter_url": "https://x.com/B4D5E6"
   },
   ...
 }
@@ -114,10 +116,12 @@ The fields are as follows:
 | `code`         | `string`           | Unique identifier for the speaker                                     |
 | `name`         | `string`           | Name of the speaker                                                   |
 | `biography`    | `string` \| `null` | Biography of the speaker                                              |
-| `avatar`       | `string` \| `null` | URL of the speaker's avatar                                           |
+| `avatar`       | `string`           | URL of the speaker's avatar                                           |
 | `slug`         | `string`           | URL-friendly version of the name                                      |
 | `submissions`  | `list[string]`     | List of codes of the sessions the speaker is speaking at              |
 | `affiliation`  | `string` \| `null` | Affiliation of the speaker                                            |
 | `homepage`     | `string` \| `null` | URL of the speaker's homepage                                         |
-| `twitter`      | `string` \| `null` | Twitter handle of the speaker                                         |
-| `mastodon`     | `string` \| `null` | Mastodon handle of the speaker                                        |
+| `gitx_url`     | `string` \| `null` | URL of the speaker's GitHub/GitLab/etc. profile                       |
+| `linkedin_url` | `string` \| `null` | URL of the speaker's LinkedIn profile                                 |
+| `twitter_url`  | `string` \| `null` | URL of the speaker's Twitter profile                                  |
+| `mastodon_url` | `string` \| `null` | URL of the speaker's Mastodon profile                                 |

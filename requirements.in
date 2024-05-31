@@ -4,5 +4,6 @@ pre-commit
 
 requests
 pydantic
+python-dotenv
 python-slugify
 tqdm
