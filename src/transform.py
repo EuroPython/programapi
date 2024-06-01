@@ -83,7 +83,42 @@ class PretalxSpeaker(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def extract(cls, values) -> dict:
-        values["slug"] = slugify(values["name"])
+        # Extract the twitter URL from the answer
+        def extract_twitter_url(text: str) -> str:
+            if text.startswith("@"):
+                twitter_url = f"https://x.com/{text[1:]}"
+            elif not text.startswith(("https://", "http://", "www.")):
+                twitter_url = f"https://x.com/{text}"
+            else:
+                twitter_url = (
+                    f"https://{text.removeprefix('https://').removeprefix('http://')}"
+                )
+
+            return twitter_url.split("?")[0]
+
+        # If it's like @user@instance, we need to convert it to a URL
+        def extract_mastodon_url(text: str) -> str:
+            if not text.startswith(("https://", "http://")) and text.count("@") == 2:
+                mastodon_url = f"https://{text.split('@')[2]}/@{text.split('@')[1]}"
+            else:
+                mastodon_url = (
+                    f"https://{text.removeprefix('https://').removeprefix('http://')}"
+                )
+
+            return mastodon_url.split("?")[0]
+
+        # Extract the linkedin URL from the answer
+        def extract_linkedin_url(text: str) -> str:
+            if text.startswith("in/"):
+                linkedin_url = f"https://linkedin.com/{text}"
+            elif not text.startswith(("https://", "http://", "www.")):
+                linkedin_url = f"https://linkedin.com/in/{text}"
+            else:
+                linkedin_url = (
+                    f"https://{text.removeprefix('https://').removeprefix('http://')}"
+                )
+
+            return linkedin_url.split("?")[0]
 
         answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
@@ -94,47 +129,26 @@ class PretalxSpeaker(BaseModel):
             if answer.question_text == SpeakerQuestion.homepage:
                 values["homepage"] = answer.answer_text
 
-            # Handle handles (pun intended)
             if answer.question_text == SpeakerQuestion.twitter:
-                twitter_url = answer.answer_text.strip().split()[0]
+                values["twitter_url"] = extract_twitter_url(
+                    answer.answer_text.strip().split()[0]
+                )
 
-                if twitter_url.startswith("@"):
-                    twitter_url = f"https://x.com/{twitter_url[1:]}"
-                elif not twitter_url.startswith(("https://", "http://", "www.")):
-                    twitter_url = f"https://x.com/{twitter_url}"
-                else:
-                    twitter_url = f"https://{twitter_url.removeprefix('https://').removeprefix('http://')}"
-
-                values["twitter_url"] = twitter_url.split("?")[0]
-
-            # If it's like @user@instance, we need to convert it to a URL
             if answer.question_text == SpeakerQuestion.mastodon:
-                mastodon_url = answer.answer_text.strip().split()[0]
-
-                if (
-                    not mastodon_url.startswith(("https://", "http://"))
-                    and mastodon_url.count("@") == 2
-                ):
-                    mastodon_url = f"https://{mastodon_url.split('@')[2]}/@{mastodon_url.split('@')[1]}"
-                else:
-                    mastodon_url = f"https://{mastodon_url.removeprefix('https://').removeprefix('http://')}"
-
-                values["mastodon_url"] = mastodon_url.split("?")[0]
+                values["mastodon_url"] = extract_mastodon_url(
+                    answer.answer_text.strip().split()[0]
+                )
 
             if answer.question_text == SpeakerQuestion.linkedin:
-                linkedin_url = answer.answer_text.strip().split()[0]
-
-                if linkedin_url.startswith("in/"):
-                    linkedin_url = f"https://linkedin.com/{linkedin_url}"
-                elif not linkedin_url.startswith(("https://", "http://", "www.")):
-                    linkedin_url = f"https://linkedin.com/in/{linkedin_url}"
-                else:
-                    linkedin_url = f"https://{linkedin_url.removeprefix('https://').removeprefix('http://')}"
-
-                values["linkedin_url"] = linkedin_url.split("?")[0]
+                values["linkedin_url"] = extract_linkedin_url(
+                    answer.answer_text.strip().split()[0]
+                )
 
             if answer.question_text == SpeakerQuestion.gitx:
                 values["gitx_url"] = answer.answer_text.strip().split()[0]
+
+        # Set the slug
+        values["slug"] = slugify(values["name"])
 
         return values
 
