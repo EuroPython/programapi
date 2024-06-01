@@ -397,8 +397,7 @@ def save_publishable_speakers(publishable: dict[str, PretalxSubmission]):
 
 
 def save_all(all_sessions: dict[str, PretalxSubmission]):
-    if not Config.public_path.exists():
-        Config.public_path.mkdir(parents=True)
+    Config.public_path.mkdir(parents=True, exist_ok=True)
 
     save_publishable_sessions(all_sessions)
     save_publishable_speakers(all_sessions)

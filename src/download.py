@@ -19,8 +19,7 @@ resources = [
     "speakers?questions=all",
 ]
 
-if not Config.raw_path.exists():
-    Config.raw_path.mkdir(parents=True)
+Config.raw_path.mkdir(parents=True, exist_ok=True)
 
 for resource in resources:
     url = base_url + f"{resource}"
