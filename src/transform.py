@@ -493,8 +493,11 @@ class PretalxSpeakers(PretalxData):
         accepted_proposals = context.context["accepted_proposals"]
         speakers = []
         for speaker in root:
-            if cls.is_speaker_publishable(speaker, accepted_proposals):
-                speakers.append(PretalxSpeaker.model_validate(speaker))
+            # Overwrite the submissions with only the publishable ones
+            if submissions := cls.is_speaker_publishable(speaker, accepted_proposals):
+                speaker = PretalxSpeaker.model_validate(speaker)
+                speaker.submissions = list(submissions)
+                speakers.append(speaker)
 
         # Sort by code for deterministic slug replacement
         speakers = sorted(speakers, key=lambda x: x.code)
