@@ -5,7 +5,14 @@ import sys
 from collections.abc import KeysView
 from datetime import datetime
 
-from pydantic import BaseModel, Field, RootModel, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    Field,
+    RootModel,
+    computed_field,
+    field_validator,
+    model_validator,
+)
 from slugify import slugify
 
 from src.config import Config
@@ -64,34 +71,37 @@ class PretalxSlot(BaseModel):
         return v
 
 
-class TimingRelationship(BaseModel):
-    talks_in_parallel: list[str]
-    talks_after: list[str]
-    talks_before: list[str]
-    next_talk: str | None = None
-    prev_talk: str | None = None
+class TimingRelationship:
+    # Relationships are stored in a dictionary with the session code as the key
+    relationships: dict[str, dict[str, list[str] | str | None]] = {}
 
-    @model_validator(mode="before")
     @classmethod
-    def compute(cls, values):
-        session = values["session"]
-        all_sessions = values["all_sessions"]
+    def compute_relationships(
+        cls, all_sessions: list[PretalxSession]
+    ) -> dict[str, dict[str, list[str] | str | None]]:
+        relationships = {}
+        for session in all_sessions:
+            talks_in_parallel = cls.compute_talks_in_parallel(session, all_sessions)
+            talks_after_data = cls.compute_talks_after(
+                session, all_sessions, talks_in_parallel
+            )
+            talks_before_data = cls.compute_talks_before(
+                session, all_sessions, talks_in_parallel
+            )
 
-        talks_in_parallel = cls.compute_talks_in_parallel(session, all_sessions)
-        talks_after_data = cls.compute_talks_after(
-            session, all_sessions, talks_in_parallel
-        )
-        talks_before_data = cls.compute_talks_before(
-            session, all_sessions, talks_in_parallel
-        )
+            relationships[session.code] = {
+                "talks_in_parallel": talks_in_parallel,
+                "talks_after": talks_after_data.get("talks_after"),
+                "next_talk": talks_after_data.get("next_talk"),
+                "talks_before": talks_before_data.get("talks_before"),
+                "prev_talk": talks_before_data.get("prev_talk"),
+            }
 
-        values["talks_in_parallel"] = talks_in_parallel
-        values["talks_after"] = talks_after_data.get("talks_after")
-        values["talks_before"] = talks_before_data.get("talks_before")
-        values["next_talk"] = talks_after_data.get("next_talk")
-        values["prev_talk"] = talks_before_data.get("prev_talk")
+        cls.relationships = relationships
 
-        return values
+    @classmethod
+    def get_relationships(cls, code: str) -> dict[str, list[str] | str | None]:
+        return cls.relationships[code]
 
     @staticmethod
     def compute_talks_in_parallel(
@@ -230,45 +240,9 @@ class PretalxSpeaker(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def extract(cls, values) -> dict:
-        # Extract the twitter URL from the answer
-        def extract_twitter_url(text: str) -> str:
-            if text.startswith("@"):
-                twitter_url = f"https://x.com/{text[1:]}"
-            elif not text.startswith(("https://", "http://", "www.")):
-                twitter_url = f"https://x.com/{text}"
-            else:
-                twitter_url = (
-                    f"https://{text.removeprefix('https://').removeprefix('http://')}"
-                )
-
-            return twitter_url.split("?")[0]
-
-        # If it's like @user@instance, we need to convert it to a URL
-        def extract_mastodon_url(text: str) -> str:
-            if not text.startswith(("https://", "http://")) and text.count("@") == 2:
-                mastodon_url = f"https://{text.split('@')[2]}/@{text.split('@')[1]}"
-            else:
-                mastodon_url = (
-                    f"https://{text.removeprefix('https://').removeprefix('http://')}"
-                )
-
-            return mastodon_url.split("?")[0]
-
-        # Extract the linkedin URL from the answer
-        def extract_linkedin_url(text: str) -> str:
-            if text.startswith("in/"):
-                linkedin_url = f"https://linkedin.com/{text}"
-            elif not text.startswith(("https://", "http://", "www.")):
-                linkedin_url = f"https://linkedin.com/in/{text}"
-            else:
-                linkedin_url = (
-                    f"https://{text.removeprefix('https://').removeprefix('http://')}"
-                )
-
-            return linkedin_url.split("?")[0]
-
         answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
+        # Extract the answers
         for answer in answers:
             if answer.question_text == SpeakerQuestion.affiliation:
                 values["affiliation"] = answer.answer_text
@@ -277,17 +251,17 @@ class PretalxSpeaker(BaseModel):
                 values["homepage"] = answer.answer_text
 
             if answer.question_text == SpeakerQuestion.twitter:
-                values["twitter_url"] = extract_twitter_url(
+                values["twitter_url"] = cls.extract_twitter_url(
                     answer.answer_text.strip().split()[0]
                 )
 
             if answer.question_text == SpeakerQuestion.mastodon:
-                values["mastodon_url"] = extract_mastodon_url(
+                values["mastodon_url"] = cls.extract_mastodon_url(
                     answer.answer_text.strip().split()[0]
                 )
 
             if answer.question_text == SpeakerQuestion.linkedin:
-                values["linkedin_url"] = extract_linkedin_url(
+                values["linkedin_url"] = cls.extract_linkedin_url(
                     answer.answer_text.strip().split()[0]
                 )
 
@@ -299,38 +273,52 @@ class PretalxSpeaker(BaseModel):
 
         return values
 
+    # Extract the twitter URL from the answer
+    @staticmethod
+    def extract_twitter_url(text: str) -> str:
+        if text.startswith("@"):
+            twitter_url = f"https://x.com/{text[1:]}"
+        elif not text.startswith(("https://", "http://", "www.")):
+            twitter_url = f"https://x.com/{text}"
+        else:
+            twitter_url = (
+                f"https://{text.removeprefix('https://').removeprefix('http://')}"
+            )
 
-class PretalxSubmissions(RootModel):
-    root: list[PretalxSession]
+        return twitter_url.split("?")[0]
 
-    @model_validator(mode="before")
-    @classmethod
-    def initiate(cls, root):
-        """
-        Returns only the publishable sessions, and computes their timings
-        """
-        publishable = []
-        for submission in root:
-            sub = PretalxSession.model_validate(submission)
-            if sub.is_publishable:
-                publishable.append(sub)
+    # If it's like @user@instance, we need to convert it to a URL
+    @staticmethod
+    def extract_mastodon_url(text: str) -> str:
+        if not text.startswith(("https://", "http://")) and text.count("@") == 2:
+            mastodon_url = f"https://{text.split('@')[2]}/@{text.split('@')[1]}"
+        else:
+            mastodon_url = (
+                f"https://{text.removeprefix('https://').removeprefix('http://')}"
+            )
 
-        for session in publishable:
-            if session.start and session.end:
-                timings = TimingRelationship.model_validate(
-                    dict(session=session, all_sessions=publishable)
-                )
+        return mastodon_url.split("?")[0]
 
-                session.talks_in_parallel = timings.talks_in_parallel
-                session.talks_after = timings.talks_after
-                session.talks_before = timings.talks_before
-                session.next_talk = timings.next_talk
-                session.prev_talk = timings.prev_talk
+    # Extract the linkedin URL from the answer
+    @staticmethod
+    def extract_linkedin_url(text: str) -> str:
+        if text.startswith("in/"):
+            linkedin_url = f"https://linkedin.com/{text}"
+        elif not text.startswith(("https://", "http://", "www.")):
+            linkedin_url = f"https://linkedin.com/in/{text}"
+        else:
+            linkedin_url = (
+                f"https://{text.removeprefix('https://').removeprefix('http://')}"
+            )
 
-        return publishable
+        return linkedin_url.split("?")[0]
 
 
 class PretalxSession(BaseModel):
+    """
+    Model for only confirmed and accepted sessions
+    """
+
     code: str
     title: str
     speakers: list[str]  # We only want the code, not the full info
@@ -347,18 +335,10 @@ class PretalxSession(BaseModel):
     level: str = ""
     delivery: str = ""
 
-    # This is embedding a slot inside a submission for easier lookup later
+    # Extracted
     room: str | None = None
     start: datetime | None = None
     end: datetime | None = None
-
-    talks_in_parallel: list[str] | None = None
-    talks_after: list[str] | None = None
-    talks_before: list[str] | None = None
-    next_talk: str | None = None
-    prev_talk: str | None = None
-
-    website_url: str
 
     @field_validator("submission_type", "track", mode="before")
     @classmethod
@@ -374,12 +354,44 @@ class PretalxSession(BaseModel):
             return str(v)
         return v
 
+    @computed_field
+    def website_url(self) -> str:
+        return (
+            f"https://ep{Config.event.split('-')[1]}.europython.eu/session/{self.slug}"
+        )
+
+    @computed_field
+    def talks_in_parallel(self) -> list[str] | None:
+        if self.start and self.end:
+            return TimingRelationship.get_relationships(self.code)["talks_in_parallel"]
+
+    @computed_field
+    def talks_after(self) -> list[str] | None:
+        if self.start and self.end:
+            return TimingRelationship.get_relationships(self.code)["talks_after"]
+
+    @computed_field
+    def talks_before(self) -> list[str] | None:
+        if self.start and self.end:
+            return TimingRelationship.get_relationships(self.code)["talks_before"]
+
+    @computed_field
+    def next_talk(self) -> str | None:
+        if self.start and self.end:
+            return TimingRelationship.get_relationships(self.code)["next_talk"]
+
+    @computed_field
+    def prev_talk(self) -> str | None:
+        if self.start and self.end:
+            return TimingRelationship.get_relationships(self.code)["prev_talk"]
+
     @model_validator(mode="before")
     @classmethod
     def extract(cls, values) -> dict:
         values["speakers"] = sorted([s["code"] for s in values["speakers"]])
         answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
+        # Extract the answers
         for answer in answers:
             # TODO if we need any other questions
             if answer.question_text == SubmissionQuestion.tweet:
@@ -394,31 +406,100 @@ class PretalxSession(BaseModel):
             if answer.question_text == SubmissionQuestion.level:
                 values["level"] = answer.answer_text.lower()
 
+        # Set slot information
         if values.get("slot"):
             slot = PretalxSlot.model_validate(values["slot"])
             values["room"] = slot.room
             values["start"] = slot.start
             values["end"] = slot.end
 
-        slug = slugify(values["title"])
-        values["slug"] = slug
-        values["website_url"] = (
-            f"https://ep{Config.event.split('-')[1]}.europython.eu/session/{slug}"
-        )
+        # Set the slug
+        values["slug"] = slugify(values["title"])
 
         return values
 
-    @property
-    def is_accepted(self) -> bool:
-        return self.state == SubmissionState.accepted
 
-    @property
-    def is_confirmed(self) -> bool:
-        return self.state == SubmissionState.confirmed
+class PretalxData(RootModel):
+    root: list[PretalxSession | PretalxSpeaker]
 
-    @property
-    def is_publishable(self) -> bool:
-        return self.is_accepted or self.is_confirmed
+    @staticmethod
+    def replace_duplicate_slugs(objects: list[PretalxSession | PretalxSpeaker]):
+        slug_count = {}
+        seen_slugs = set()
+
+        for obj in objects:
+            original_slug = obj.slug
+
+            if original_slug in seen_slugs:
+                if original_slug in slug_count:
+                    slug_count[original_slug] += 1
+                else:
+                    slug_count[original_slug] = 1
+                obj.slug = f"{original_slug}-{slug_count[original_slug]}"
+            else:
+                seen_slugs.add(original_slug)
+
+
+class PretalxSubmissions(PretalxData):
+    root: list[PretalxSession]
+
+    @model_validator(mode="before")
+    @classmethod
+    def initiate_publishable_sessions(cls, root) -> PretalxSubmissions:
+        """
+        Returns only the publishable sessions
+        """
+        sessions = []
+        for submission in root:
+            if cls.is_submission_publishable(submission):
+                sessions.append(PretalxSession.model_validate(submission))
+
+        # Sort by start time (early first) for deterministic slug replacement
+        sessions = sorted(sessions, key=lambda x: (x.start is None, x.start))
+
+        cls.replace_duplicate_slugs(sessions)
+
+        # Compute the relationships of all sessions
+        TimingRelationship.compute_relationships(
+            [s for s in sessions if s.start and s.end]
+        )
+
+        return sessions
+
+    @staticmethod
+    def is_submission_publishable(submission: PretalxSession) -> bool:
+        return submission.get("state") in (
+            SubmissionState.accepted,
+            SubmissionState.confirmed,
+        )
+
+
+class PretalxSpeakers(PretalxData):
+    root: list[PretalxSpeaker]
+
+    # Overriden to be able to pass the accepted_proposals
+    @classmethod
+    def model_validate(cls, root, accepted_proposals: KeysView[str]) -> PretalxSpeakers:
+        """
+        Returns only speakers with publishable sessions
+        """
+        speakers = []
+        for speaker in root:
+            if cls.is_speaker_publishable(speaker, accepted_proposals):
+                speakers.append(PretalxSpeaker.model_validate(speaker))
+
+        # Sort by code for deterministic slug replacement
+        speakers = sorted(speakers, key=lambda x: x.code)
+
+        cls.replace_duplicate_slugs(speakers)
+
+        return cls(root=speakers)
+
+    @staticmethod
+    def is_speaker_publishable(
+        speaker: PretalxSpeaker, accepted_proposals: KeysView[str]
+    ) -> bool:
+        return set(speaker.get("submissions")) & accepted_proposals
 
 
 def parse_publishable_submissions() -> dict[str, PretalxSession]:
@@ -432,61 +513,53 @@ def parse_publishable_submissions() -> dict[str, PretalxSession]:
     return subs_dict
 
 
-def parse_speakers() -> list[PretalxSpeaker]:
+def parse_publishable_speakers(
+    publishable_sessions: KeysView[str],
+) -> dict[str, PretalxSpeaker]:
     """
     Returns only speakers with publishable sessions
     """
     with open(Config.raw_path / "speakers_latest.json") as fd:
         js = json.load(fd)
-        speakers = [PretalxSpeaker.model_validate(item) for item in js]
-    return speakers
+        speakers = PretalxSpeakers.model_validate(
+            js, accepted_proposals=publishable_sessions
+        ).root
+        speakers_dict = {s.code: s for s in speakers}
+    return speakers_dict
 
 
-def publishable_speakers(
-    accepted_proposals: KeysView[str],
-) -> dict[str, PretalxSpeaker]:
-    sp = parse_speakers()
-    output = {}
-    for speaker in sp:
-        accepted = set(speaker.submissions) & accepted_proposals
-        if accepted:
-            # Overwrite with only the accepted proposals
-            speaker.submissions = list(accepted)
-            output[speaker.code] = speaker
-
-    return output
-
-
-def save_publishable_sessions(publishable: dict[str, PretalxSession]):
+def save_publishable_sessions(sessions: dict[str, PretalxSession]):
     path = Config.public_path / "sessions.json"
 
-    data = {k: json.loads(v.model_dump_json()) for k, v in publishable.items()}
+    data = {k: json.loads(v.model_dump_json()) for k, v in sessions.items()}
     with open(path, "w") as fd:
         json.dump(data, fd, indent=2)
 
 
-def save_publishable_speakers(publishable: dict[str, PretalxSession]):
+def save_publishable_speakers(speakers: dict[str, PretalxSession]):
     path = Config.public_path / "speakers.json"
-
-    speakers = publishable_speakers(publishable.keys())
 
     data = {k: v.model_dump() for k, v in speakers.items()}
     with open(path, "w") as fd:
         json.dump(data, fd, indent=2)
 
 
-def save_all(all_sessions: dict[str, PretalxSession]):
+def save_all(
+    publishable_sessions: dict[str, PretalxSession],
+    publishable_speakers: dict[str, PretalxSpeaker],
+):
     Config.public_path.mkdir(parents=True, exist_ok=True)
 
-    save_publishable_sessions(all_sessions)
-    save_publishable_speakers(all_sessions)
+    save_publishable_sessions(publishable_sessions)
+    save_publishable_speakers(publishable_speakers)
 
 
-def check_duplicate_slugs(all_sessions: dict[str, PretalxSession]) -> bool:
-    all_speakers = publishable_speakers(all_sessions.keys())
-
-    session_slugs = [s.slug for s in all_sessions.values()]
-    speaker_slugs = [s.slug for s in all_speakers.values()]
+def check_duplicate_slugs(
+    publishable_sessions: dict[str, PretalxSession],
+    publishable_speakers: dict[str, PretalxSpeaker],
+) -> bool:
+    session_slugs = [s.slug for s in publishable_sessions.values()]
+    speaker_slugs = [s.slug for s in publishable_speakers.values()]
 
     session_duplicates = [
         slug for slug in set(session_slugs) if session_slugs.count(slug) > 1
@@ -509,14 +582,15 @@ if __name__ == "__main__":
     print(f"Transforming {Config.event} data...")
     print("Checking for duplicate slugs...")
 
-    all_sessions = parse_publishable_submissions()
+    publishable_sessions = parse_publishable_submissions()
+    publishable_speakers = parse_publishable_speakers(publishable_sessions.keys())
 
-    if not check_duplicate_slugs(all_sessions) and (
+    if not check_duplicate_slugs(publishable_sessions, publishable_speakers) and (
         len(sys.argv) <= 1 or sys.argv[1] != "--allow-dupes"
     ):
         print("Exiting. Use ``make transform ALLOW_DUPES=true`` to continue.")
         sys.exit(1)
 
     print("Saving publishable data...")
-    save_all(all_sessions)
+    save_all(publishable_sessions, publishable_speakers)
     print("Done")
