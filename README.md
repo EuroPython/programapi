@@ -36,4 +36,6 @@ The API is served at ``programapi24.europython.eu/2024``. It has two endpoints (
 - ``/speakers.json``: Returns the list of confirmed speakers.
 - ``/sessions.json``: Returns the list of confirmed sessions.
 
-**Note:** See [this page](data/examples/README.md) for the explanations of the fields in the returned JSON files.
+## Schema
+
+See [this page](data/examples/README.md) for the explanations of the fields in the returned JSON files.

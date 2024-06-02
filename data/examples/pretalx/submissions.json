@@ -28,13 +28,22 @@
         "abstract": "This is the abstract of the talk, it should be about Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec condimentum viverra ante in dignissim. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec molestie lorem enim, id dignissim mi faucibus a. Suspendisse mollis lobortis mollis. Praesent eu lorem id velit maximus blandit eget at nisl. Quisque fringilla pharetra euismod. Morbi id ante vitae tortor volutpat interdum fermentum id tortor. Vivamus ligula nisl, mattis molestie purus vel, interdum venenatis nulla. Nam suscipit scelerisque ornare. Ut consequat sem vel sapien porta pretium. Nullam non lacinia nulla, a tincidunt dui. Sed consequat nibh in nibh ornare, rhoncus sollicitudin sem lobortis. Etiam molestie est et felis sollicitudin, commodo facilisis mi vehicula. Quisque pharetra consectetur ligula, sit amet tincidunt nibh consectetur fringilla. Suspendisse eu libero sed magna malesuada bibendum sed et enim. Phasellus convallis tortor nec lectus venenatis, id tristique quam finibus.",
         "description": null,
         "duration": 45,
+        "resources": [
+            {
+                "resource": "https://example.com/notebook.ipynb",
+                "description": "Notebook used in the talk"
+            },
+            {
+                "resource": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "description": "Video of the robot in action"
+            }
+        ],
         "slot_count": 1,
         "do_not_record": false,
         "is_featured": false,
         "content_locale": "en",
         "slot": null,
         "image": null,
-        "resources": [],
         "answers": [
             {
                 "question": {

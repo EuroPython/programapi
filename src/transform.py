@@ -326,13 +326,13 @@ class PretalxSession(BaseModel):
     track: str | None = None
     state: str
     abstract: str
-    answers: list[PretalxAnswer] = Field(..., exclude=True)
-    slot: PretalxSlot | None = Field(..., exclude=True)
     tweet: str = ""
     duration: str
-
     level: str = ""
     delivery: str = ""
+    resources: list[dict[str, str]] | None = None
+    answers: list[PretalxAnswer] = Field(..., exclude=True)
+    slot: PretalxSlot | None = Field(..., exclude=True)
 
     # Extracted
     room: str | None = None
@@ -352,6 +352,11 @@ class PretalxSession(BaseModel):
         if isinstance(v, int):
             return str(v)
         return v
+
+    @field_validator("resources", mode="before")
+    @classmethod
+    def handle_resources(cls, v) -> list[dict[str, str]] | None:
+        return v or None
 
     @computed_field
     def website_url(self) -> str:
