@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+from collections.abc import KeysView
 from datetime import datetime
 
 from pydantic import BaseModel, Field, RootModel, field_validator, model_validator
@@ -315,7 +316,7 @@ class PretalxSubmissions(RootModel):
                 publishable.append(sub)
 
         for session in publishable:
-            if session.start:
+            if session.start and session.end:
                 timings = TimingRelationship.model_validate(
                     dict(session=session, all_sessions=publishable)
                 )
@@ -361,7 +362,7 @@ class PretalxSession(BaseModel):
 
     @field_validator("submission_type", "track", mode="before")
     @classmethod
-    def handle_localized(cls, v) -> str:
+    def handle_localized(cls, v) -> str | None:
         if isinstance(v, dict):
             return v.get("en")
         return v
@@ -420,15 +421,15 @@ class PretalxSession(BaseModel):
         return self.is_accepted or self.is_confirmed
 
 
-def parse_publishable_submissions() -> list[PretalxSession]:
+def parse_publishable_submissions() -> dict[str, PretalxSession]:
     """
     Returns only publishable sessions
     """
     with open(Config.raw_path / "submissions_latest.json") as fd:
         js = json.load(fd)
         subs = PretalxSubmissions.model_validate(js).root
-        subs = {s.code: s for s in subs}
-    return subs
+        subs_dict = {s.code: s for s in subs}
+    return subs_dict
 
 
 def parse_speakers() -> list[PretalxSpeaker]:
@@ -441,7 +442,9 @@ def parse_speakers() -> list[PretalxSpeaker]:
     return speakers
 
 
-def publishable_speakers(accepted_proposals: set[str]) -> dict[str, PretalxSpeaker]:
+def publishable_speakers(
+    accepted_proposals: KeysView[str],
+) -> dict[str, PretalxSpeaker]:
     sp = parse_speakers()
     output = {}
     for speaker in sp:

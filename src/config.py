@@ -17,5 +17,5 @@ class Config:
             print("Please prefer .env file to store your token! It's more secure!")
             return token
         elif token is None:
-            raise Exception("Please set your token in .env file!")
+            raise ValueError("Please set your token in .env file!")
         return token
