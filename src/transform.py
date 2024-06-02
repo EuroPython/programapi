@@ -9,6 +9,7 @@ from pydantic import (
     BaseModel,
     Field,
     RootModel,
+    ValidationInfo,
     computed_field,
     field_validator,
     model_validator,
@@ -76,9 +77,7 @@ class TimingRelationship:
     relationships: dict[str, dict[str, list[str] | str | None]] = {}
 
     @classmethod
-    def compute_relationships(
-        cls, all_sessions: list[PretalxSession]
-    ) -> dict[str, dict[str, list[str] | str | None]]:
+    def compute_relationships(cls, all_sessions: list[PretalxSession]) -> None:
         relationships = {}
         for session in all_sessions:
             talks_in_parallel = cls.compute_talks_in_parallel(session, all_sessions)
@@ -424,8 +423,8 @@ class PretalxData(RootModel):
 
     @staticmethod
     def replace_duplicate_slugs(objects: list[PretalxSession | PretalxSpeaker]):
-        slug_count = {}
-        seen_slugs = set()
+        slug_count: dict[str, int] = {}
+        seen_slugs: set[str] = set()
 
         for obj in objects:
             original_slug = obj.slug
@@ -445,7 +444,7 @@ class PretalxSubmissions(PretalxData):
 
     @model_validator(mode="before")
     @classmethod
-    def initiate_publishable_sessions(cls, root) -> PretalxSubmissions:
+    def initiate_publishable_sessions(cls, root) -> list[PretalxSession]:
         """
         Returns only the publishable sessions
         """
@@ -467,7 +466,7 @@ class PretalxSubmissions(PretalxData):
         return sessions
 
     @staticmethod
-    def is_submission_publishable(submission: PretalxSession) -> bool:
+    def is_submission_publishable(submission: dict) -> bool:
         return submission.get("state") in (
             SubmissionState.accepted,
             SubmissionState.confirmed,
@@ -478,11 +477,15 @@ class PretalxSpeakers(PretalxData):
     root: list[PretalxSpeaker]
 
     # Overriden to be able to pass the accepted_proposals
+    @model_validator(mode="before")
     @classmethod
-    def model_validate(cls, root, accepted_proposals: KeysView[str]) -> PretalxSpeakers:
+    def initiate_publishable_speakers(
+        cls, root, context: ValidationInfo
+    ) -> list[PretalxSpeaker]:
         """
         Returns only speakers with publishable sessions
         """
+        accepted_proposals = context.context["accepted_proposals"]
         speakers = []
         for speaker in root:
             if cls.is_speaker_publishable(speaker, accepted_proposals):
@@ -493,12 +496,12 @@ class PretalxSpeakers(PretalxData):
 
         cls.replace_duplicate_slugs(speakers)
 
-        return cls(root=speakers)
+        return speakers
 
     @staticmethod
     def is_speaker_publishable(
-        speaker: PretalxSpeaker, accepted_proposals: KeysView[str]
-    ) -> bool:
+        speaker: dict, accepted_proposals: KeysView[str]
+    ) -> set[str]:
         return set(speaker.get("submissions")) & accepted_proposals
 
 
@@ -522,7 +525,7 @@ def parse_publishable_speakers(
     with open(Config.raw_path / "speakers_latest.json") as fd:
         js = json.load(fd)
         speakers = PretalxSpeakers.model_validate(
-            js, accepted_proposals=publishable_sessions
+            js, context={"accepted_proposals": publishable_sessions}
         ).root
         speakers_dict = {s.code: s for s in speakers}
     return speakers_dict
@@ -536,7 +539,7 @@ def save_publishable_sessions(sessions: dict[str, PretalxSession]):
         json.dump(data, fd, indent=2)
 
 
-def save_publishable_speakers(speakers: dict[str, PretalxSession]):
+def save_publishable_speakers(speakers: dict[str, PretalxSpeaker]):
     path = Config.public_path / "speakers.json"
 
     data = {k: v.model_dump() for k, v in speakers.items()}
@@ -583,6 +586,8 @@ if __name__ == "__main__":
     print("Checking for duplicate slugs...")
 
     publishable_sessions = parse_publishable_submissions()
+
+    # Pass only the keys (session codes)
     publishable_speakers = parse_publishable_speakers(publishable_sessions.keys())
 
     if not check_duplicate_slugs(publishable_sessions, publishable_speakers) and (
