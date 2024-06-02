@@ -1,6 +1,6 @@
 import json
 
-from src.transform import PretalxSpeaker, PretalxSubmission
+from src.transform import PretalxSession, PretalxSpeaker
 
 with open("./data/examples/pretalx/submissions.json") as fd:
     pretalx_submissions = json.load(fd)
@@ -13,7 +13,7 @@ def test_sessions_example():
     assert pretalx_submissions[0]["code"] == "A8CD3F"
     pretalx = pretalx_submissions[0]
 
-    transformed = PretalxSubmission.model_validate(pretalx)
+    transformed = PretalxSession.model_validate(pretalx)
 
     with open("./data/examples/output/sessions.json") as fd:
         sessions = json.load(fd)

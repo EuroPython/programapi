@@ -4,7 +4,7 @@ import json
 import sys
 from datetime import datetime
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, RootModel, field_validator, model_validator
 from slugify import slugify
 
 from src.config import Config
@@ -61,6 +61,152 @@ class PretalxSlot(BaseModel):
         if isinstance(v, dict):
             return v.get("en")
         return v
+
+
+class TimingRelationship(BaseModel):
+    talks_in_parallel: list[str]
+    talks_after: list[str]
+    talks_before: list[str]
+    next_talk: str | None = None
+    prev_talk: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def compute(cls, values):
+        session = values["session"]
+        all_sessions = values["all_sessions"]
+
+        talks_in_parallel = cls.compute_talks_in_parallel(session, all_sessions)
+        talks_after_data = cls.compute_talks_after(
+            session, all_sessions, talks_in_parallel
+        )
+        talks_before_data = cls.compute_talks_before(
+            session, all_sessions, talks_in_parallel
+        )
+
+        values["talks_in_parallel"] = talks_in_parallel
+        values["talks_after"] = talks_after_data.get("talks_after")
+        values["talks_before"] = talks_before_data.get("talks_before")
+        values["next_talk"] = talks_after_data.get("next_talk")
+        values["prev_talk"] = talks_before_data.get("prev_talk")
+
+        return values
+
+    @staticmethod
+    def compute_talks_in_parallel(
+        session: PretalxSession, all_sessions: list[PretalxSession]
+    ) -> list[str]:
+        talks_parallel = []
+        for other_session in all_sessions:
+            if (
+                other_session.code == session.code
+                or other_session.start is None
+                or session.start is None
+            ):
+                continue
+
+            # If they intersect, they are in parallel
+            if other_session.start < session.end and other_session.end > session.start:
+                talks_parallel.append(other_session.code)
+
+        return talks_parallel
+
+    @staticmethod
+    def compute_talks_after(
+        session: PretalxSession,
+        all_sessions: list[PretalxSession],
+        talks_in_parallel: list[str] = [],
+    ) -> dict[str, list[str] | str | None]:
+        # Sort sessions based on start time, early first
+        all_sessions_sorted = sorted(
+            all_sessions, key=lambda x: (x.start is None, x.start)
+        )
+
+        # Filter out sessions
+        remaining_sessions = [
+            other_session
+            for other_session in all_sessions_sorted
+            if other_session.start is not None
+            and other_session.start >= session.end
+            and other_session.code not in talks_in_parallel
+            and other_session.code != session.code
+            and other_session.start.day == session.start.day
+            and not other_session.submission_type
+            == session.submission_type
+            == "Announcements"
+        ]
+
+        # Add sessions to the list if they are in different rooms
+        seen_rooms = set()
+        unique_sessions = []
+
+        for other_session in remaining_sessions:
+            if other_session.room not in seen_rooms:
+                unique_sessions.append(other_session)
+                seen_rooms.add(other_session.room)
+
+        # If there is a keynote next, only show that
+        if any(s.submission_type == "Keynote" for s in unique_sessions):
+            unique_sessions = [
+                s for s in unique_sessions if s.submission_type == "Keynote"
+            ]
+
+        # Set the next talks in all rooms
+        talks_after = [s.code for s in unique_sessions]
+
+        # Set the next talk in the same room, or a keynote
+        next_talk = None
+        for other_session in unique_sessions:
+            if (
+                other_session.room == session.room
+                or other_session.submission_type == "Keynote"
+            ):
+                next_talk = other_session.code
+                break
+
+        return {"talks_after": talks_after, "next_talk": next_talk}
+
+    @staticmethod
+    def compute_talks_before(
+        session: PretalxSession,
+        all_sessions: list[PretalxSession],
+        talks_in_parallel: list[str] = [],
+    ) -> dict[str, list[str] | str | None]:
+        # Sort sessions based on start time, late first
+        all_sessions_sorted = sorted(
+            all_sessions,
+            key=lambda x: (x.start is None, x.start),
+            reverse=True,
+        )
+
+        remaining_sessions = [
+            other_session
+            for other_session in all_sessions_sorted
+            if other_session.start is not None
+            and other_session.code not in talks_in_parallel
+            and other_session.start <= session.start
+            and other_session.code != session.code
+            and other_session.start.day == session.start.day
+            and other_session.submission_type != "Announcements"
+        ]
+
+        seen_rooms = set()
+        unique_sessions = []
+
+        for other_session in remaining_sessions:
+            if other_session.room not in seen_rooms:
+                unique_sessions.append(other_session)
+                seen_rooms.add(other_session.room)
+
+        talks_before = [session.code for session in unique_sessions]
+
+        prev_talk = None
+        for other_session in unique_sessions:
+            if other_session.room == session.room:
+                prev_talk = other_session.code
+                break
+
+        return {"talks_before": talks_before, "prev_talk": prev_talk}
 
 
 class PretalxSpeaker(BaseModel):
@@ -153,7 +299,37 @@ class PretalxSpeaker(BaseModel):
         return values
 
 
-class PretalxSubmission(BaseModel):
+class PretalxSubmissions(RootModel):
+    root: list[PretalxSession]
+
+    @model_validator(mode="before")
+    @classmethod
+    def initiate(cls, root):
+        """
+        Returns only the publishable sessions, and computes their timings
+        """
+        publishable = []
+        for submission in root:
+            sub = PretalxSession.model_validate(submission)
+            if sub.is_publishable:
+                publishable.append(sub)
+
+        for session in publishable:
+            if session.start:
+                timings = TimingRelationship.model_validate(
+                    dict(session=session, all_sessions=publishable)
+                )
+
+                session.talks_in_parallel = timings.talks_in_parallel
+                session.talks_after = timings.talks_after
+                session.talks_before = timings.talks_before
+                session.next_talk = timings.next_talk
+                session.prev_talk = timings.prev_talk
+
+        return publishable
+
+
+class PretalxSession(BaseModel):
     code: str
     title: str
     speakers: list[str]  # We only want the code, not the full info
@@ -175,8 +351,6 @@ class PretalxSubmission(BaseModel):
     start: datetime | None = None
     end: datetime | None = None
 
-    # TODO: once we have schedule data then we can prefill those in the code here
-    # These are added after the model is created
     talks_in_parallel: list[str] | None = None
     talks_after: list[str] | None = None
     talks_before: list[str] | None = None
@@ -245,132 +419,26 @@ class PretalxSubmission(BaseModel):
     def is_publishable(self) -> bool:
         return self.is_accepted or self.is_confirmed
 
-    @staticmethod
-    def set_talks_in_parallel(
-        submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
-    ) -> None:
-        parallel = []
-        for session in all_sessions.values():
-            if (
-                session.code == submission.code
-                or session.start is None
-                or submission.start is None
-            ):
-                continue
 
-            # If they intersect, they are in parallel
-            if session.start < submission.end and session.end > submission.start:
-                parallel.append(session.code)
-
-        submission.talks_in_parallel = parallel
-
-    @staticmethod
-    def set_talks_after(
-        submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
-    ) -> None:
-        # Sort sessions based on start time, early first
-        all_sessions_sorted = sorted(
-            all_sessions.values(), key=lambda x: (x.start is None, x.start)
-        )
-
-        # Filter out sessions
-        remaining_sessions = [
-            session
-            for session in all_sessions_sorted
-            if session.start is not None
-            and session.start >= submission.end
-            and session.code not in submission.talks_in_parallel
-            and session.code != submission.code
-            and submission.start.day == session.start.day
-            and not submission.submission_type
-            == session.submission_type
-            == "Announcements"
-        ]
-
-        # Add sessions to the list if they are in different rooms
-        seen_rooms = set()
-        unique_sessions = []
-
-        for session in remaining_sessions:
-            if session.room not in seen_rooms:
-                unique_sessions.append(session)
-                seen_rooms.add(session.room)
-
-        # If there is a keynote next, only show that
-        if any(s.submission_type == "Keynote" for s in unique_sessions):
-            unique_sessions = [
-                s for s in unique_sessions if s.submission_type == "Keynote"
-            ]
-
-        # Set the next talks in all rooms
-        submission.talks_after = [session.code for session in unique_sessions]
-
-        # Set the next talk in the same room, or a keynote
-        for session in unique_sessions:
-            if session.room == submission.room or session.submission_type == "Keynote":
-                submission.next_talk = session.code
-                break
-
-    @staticmethod
-    def set_talks_before(
-        submission: PretalxSubmission, all_sessions: dict[str, PretalxSubmission]
-    ) -> None:
-        # Sort sessions based on start time, late first
-        all_sessions_sorted = sorted(
-            all_sessions.values(),
-            key=lambda x: (x.start is None, x.start),
-            reverse=True,
-        )
-
-        remaining_sessions = [
-            session
-            for session in all_sessions_sorted
-            if session.start is not None
-            and session.code not in submission.talks_in_parallel
-            and session.start <= submission.start
-            and session.code != submission.code
-            and submission.start.day == session.start.day
-            and session.submission_type != "Announcements"
-        ]
-
-        seen_rooms = set()
-        unique_sessions = []
-
-        for session in remaining_sessions:
-            if session.room not in seen_rooms:
-                unique_sessions.append(session)
-                seen_rooms.add(session.room)
-
-        submission.talks_before = [session.code for session in unique_sessions]
-
-        for session in unique_sessions:
-            if session.room == submission.room:
-                submission.prev_talk = session.code
-                break
-
-
-def parse_submissions() -> list[PretalxSubmission]:
+def parse_publishable_submissions() -> list[PretalxSession]:
     """
-    Returns only confirmed talks
+    Returns only publishable sessions
     """
     with open(Config.raw_path / "submissions_latest.json") as fd:
         js = json.load(fd)
-        subs = [PretalxSubmission.model_validate(item) for item in js]
+        subs = PretalxSubmissions.model_validate(js).root
+        subs = {s.code: s for s in subs}
     return subs
 
 
 def parse_speakers() -> list[PretalxSpeaker]:
     """
-    Returns only speakers with confirmed talks
+    Returns only speakers with publishable sessions
     """
     with open(Config.raw_path / "speakers_latest.json") as fd:
         js = json.load(fd)
         speakers = [PretalxSpeaker.model_validate(item) for item in js]
     return speakers
-
-
-def publishable_submissions() -> dict[str, PretalxSubmission]:
-    return {s.code: s for s in parse_submissions() if s.is_publishable}
 
 
 def publishable_speakers(accepted_proposals: set[str]) -> dict[str, PretalxSpeaker]:
@@ -386,21 +454,15 @@ def publishable_speakers(accepted_proposals: set[str]) -> dict[str, PretalxSpeak
     return output
 
 
-def save_publishable_sessions(publishable: dict[str, PretalxSubmission]):
+def save_publishable_sessions(publishable: dict[str, PretalxSession]):
     path = Config.public_path / "sessions.json"
-
-    for sub in publishable.values():
-        if sub.start is not None:
-            PretalxSubmission.set_talks_in_parallel(sub, publishable)
-            PretalxSubmission.set_talks_after(sub, publishable)
-            PretalxSubmission.set_talks_before(sub, publishable)
 
     data = {k: json.loads(v.model_dump_json()) for k, v in publishable.items()}
     with open(path, "w") as fd:
         json.dump(data, fd, indent=2)
 
 
-def save_publishable_speakers(publishable: dict[str, PretalxSubmission]):
+def save_publishable_speakers(publishable: dict[str, PretalxSession]):
     path = Config.public_path / "speakers.json"
 
     speakers = publishable_speakers(publishable.keys())
@@ -410,14 +472,14 @@ def save_publishable_speakers(publishable: dict[str, PretalxSubmission]):
         json.dump(data, fd, indent=2)
 
 
-def save_all(all_sessions: dict[str, PretalxSubmission]):
+def save_all(all_sessions: dict[str, PretalxSession]):
     Config.public_path.mkdir(parents=True, exist_ok=True)
 
     save_publishable_sessions(all_sessions)
     save_publishable_speakers(all_sessions)
 
 
-def check_duplicate_slugs(all_sessions: dict[str, PretalxSubmission]) -> bool:
+def check_duplicate_slugs(all_sessions: dict[str, PretalxSession]) -> bool:
     all_speakers = publishable_speakers(all_sessions.keys())
 
     session_slugs = [s.slug for s in all_sessions.values()]
@@ -444,7 +506,7 @@ if __name__ == "__main__":
     print(f"Transforming {Config.event} data...")
     print("Checking for duplicate slugs...")
 
-    all_sessions = publishable_submissions()
+    all_sessions = parse_publishable_submissions()
 
     if not check_duplicate_slugs(all_sessions) and (
         len(sys.argv) <= 1 or sys.argv[1] != "--allow-dupes"
