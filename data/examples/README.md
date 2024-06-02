@@ -77,7 +77,7 @@ The fields are as follows:
 | `duration`          | `string`                                  | Duration of the session in minutes                            |
 | `level`             | `string`                                  | Level of the session (e.g. beginner, intermediate, advanced)  |
 | `delivery`          | `string`                                  | Delivery mode of the session (e.g. in-person, remote)         |
-| `resources`         | `array[object[string, string]]` \| `null` | List of resources for the session: `{"resource": \<url\>, "description": \<description\>}` |
+| `resources`         | `array[object[string, string]]` \| `null` | List of resources for the session: `{"resource": <url>, "description": <description>}` |
 | `room`              | `string` \| `null`                        | Room where the session will be held                           |
 | `start`             | `string (datetime ISO format)` \| `null`  | Start time of the session                                     |
 | `end`               | `string (datetime ISO format)` \| `null`  | End time of the session                                       |
