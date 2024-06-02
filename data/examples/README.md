@@ -109,7 +109,7 @@ The fields are as follows:
     ],
     "affiliation": "A Company",
     "homepage": "https://example.com",
-    "gitx_url": "https://github.com/B4D5E6",
+    "gitx": "https://github.com/B4D5E6",
     "linkedin_url": "https://www.linkedin.com/in/B4D5E6",
     "mastodon_url": "https://mastodon.social/@B4D5E6",
     "twitter_url": "https://x.com/B4D5E6"
@@ -132,8 +132,8 @@ The fields are as follows:
 | `slug`         | `string`           | URL-friendly version of the name                                      |
 | `submissions`  | `array[string]`    | List of codes of the sessions the speaker is speaking at              |
 | `affiliation`  | `string` \| `null` | Affiliation of the speaker                                            |
-| `homepage`     | `string` \| `null` | URL of the speaker's homepage                                         |
-| `gitx_url`     | `string` \| `null` | URL of the speaker's GitHub/GitLab/etc. profile                       |
+| `homepage`     | `string` \| `null` | URL/text of the speaker's homepage                                    |
+| `gitx`         | `string` \| `null` | URL/text of the speaker's GitHub/GitLab/etc. profile                  |
 | `linkedin_url` | `string` \| `null` | URL of the speaker's LinkedIn profile                                 |
 | `twitter_url`  | `string` \| `null` | URL of the speaker's Twitter profile                                  |
 | `mastodon_url` | `string` \| `null` | URL of the speaker's Mastodon profile                                 |

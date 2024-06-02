@@ -234,7 +234,7 @@ class PretalxSpeaker(BaseModel):
     twitter_url: str | None = None
     mastodon_url: str | None = None
     linkedin_url: str | None = None
-    gitx_url: str | None = None
+    gitx: str | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -265,7 +265,7 @@ class PretalxSpeaker(BaseModel):
                 )
 
             if answer.question_text == SpeakerQuestion.gitx:
-                values["gitx_url"] = answer.answer_text.strip().split()[0]
+                values["gitx"] = answer.answer_text.strip().split()[0]
 
         # Set the slug
         values["slug"] = slugify(values["name"])
