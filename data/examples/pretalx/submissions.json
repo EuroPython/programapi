@@ -141,7 +141,7 @@
         },
         "track_id": 4493,
         "state": "confirmed",
-        "abstract": "This is the abstract of the talk, it should be about Lorem ipsum dolor sit amet",
+        "abstract": "This is the abstract of the shorter talk, it should be about Lorem ipsum dolor sit amet",
         "description": null,
         "duration": 30,
         "slot_count": 1,
@@ -165,6 +165,19 @@
                 "review": null,
                 "person": null,
                 "options": []
+            },
+            {
+                "question": {
+                    "id": 3412,
+                    "question": {
+                        "en": "Abstract as a tweet / toot"
+                    }
+                },
+                    "answer": "Hey, short tweet",
+                "answer_file": null,
+                "submission": "B8CD4F",
+                "review": null,
+                "person": null
             },
             {
                 "question": {

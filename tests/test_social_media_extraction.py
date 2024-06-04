@@ -1,6 +1,6 @@
 import pytest
 
-from src.transform import PretalxSpeaker
+from src.transform import EuroPythonSpeaker
 
 
 @pytest.mark.parametrize(
@@ -16,7 +16,7 @@ from src.transform import PretalxSpeaker
     ],
 )
 def test_extract_mastodon_url(input_string: str, result: str) -> None:
-    assert PretalxSpeaker.extract_mastodon_url(input_string) == result
+    assert EuroPythonSpeaker.extract_mastodon_url(input_string) == result
 
 
 @pytest.mark.parametrize(
@@ -29,5 +29,5 @@ def test_extract_mastodon_url(input_string: str, result: str) -> None:
         ("https://linkedin.com/in/username", "https://linkedin.com/in/username"),
     ],
 )
-def test_extract_linked_url(input_string: str, result: str) -> None:
-    assert PretalxSpeaker.extract_linkedin_url(input_string) == result
+def test_extract_linkedin_url(input_string: str, result: str) -> None:
+    assert EuroPythonSpeaker.extract_linkedin_url(input_string) == result

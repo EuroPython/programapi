@@ -4,16 +4,9 @@ import json
 import sys
 from collections.abc import KeysView
 from datetime import datetime
+from enum import Enum
 
-from pydantic import (
-    BaseModel,
-    Field,
-    RootModel,
-    ValidationInfo,
-    computed_field,
-    field_validator,
-    model_validator,
-)
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 from slugify import slugify
 
 from src.config import Config
@@ -35,10 +28,13 @@ class SubmissionQuestion:
     level = "Expected audience expertise"
 
 
-class SubmissionState:
+class SubmissionState(Enum):
     accepted = "accepted"
     confirmed = "confirmed"
     withdrawn = "withdrawn"
+    rejected = "rejected"
+    canceled = "canceled"
+    submitted = "submitted"
 
 
 class PretalxAnswer(BaseModel):
@@ -72,41 +68,78 @@ class PretalxSlot(BaseModel):
         return v
 
 
-class TimingRelationship:
-    # Relationships are stored in a dictionary with the session code as the key
-    relationships: dict[str, dict[str, list[str] | str | None]] = {}
+class TimingRelationships:
+    all_sessions_in_parallel: dict[str, list[str]] = {}
+    all_sessions_after: dict[str, list[str]] = {}
+    all_sessions_before: dict[str, list[str]] = {}
+    all_next_session: dict[str, str | None] = {}
+    all_prev_session: dict[str, str | None] = {}
 
     @classmethod
-    def compute_relationships(cls, all_sessions: list[PretalxSession]) -> None:
-        relationships = {}
+    def compute(cls, all_sessions: list[PretalxSubmission]) -> None:
         for session in all_sessions:
-            talks_in_parallel = cls.compute_talks_in_parallel(session, all_sessions)
-            talks_after_data = cls.compute_talks_after(
-                session, all_sessions, talks_in_parallel
+            if not session.start or not session.end:
+                continue
+
+            sessions_in_parallel = cls.compute_sessions_in_parallel(
+                session, all_sessions
             )
-            talks_before_data = cls.compute_talks_before(
-                session, all_sessions, talks_in_parallel
+            sessions_after_data = cls.compute_sessions_after(
+                session, all_sessions, sessions_in_parallel
+            )
+            sessions_before_data = cls.compute_sessions_before(
+                session, all_sessions, sessions_in_parallel
             )
 
-            relationships[session.code] = {
-                "talks_in_parallel": talks_in_parallel,
-                "talks_after": talks_after_data.get("talks_after"),
-                "next_talk": talks_after_data.get("next_talk"),
-                "talks_before": talks_before_data.get("talks_before"),
-                "prev_talk": talks_before_data.get("prev_talk"),
-            }
-
-        cls.relationships = relationships
+            cls.all_sessions_in_parallel[session.code] = sessions_in_parallel
+            cls.all_sessions_after[session.code] = sessions_after_data.get(
+                "sessions_after"
+            )
+            cls.all_sessions_before[session.code] = sessions_before_data.get(
+                "sessions_before"
+            )
+            cls.all_next_session[session.code] = sessions_after_data.get("next_session")
+            cls.all_prev_session[session.code] = sessions_before_data.get(
+                "prev_session"
+            )
 
     @classmethod
-    def get_relationships(cls, code: str) -> dict[str, list[str] | str | None]:
-        return cls.relationships[code]
+    def get_sessions_in_parallel(
+        cls, session_code: str | None = None
+    ) -> list[str] | None:
+        if session_code:
+            return cls.all_sessions_in_parallel.get(session_code)
+        return cls.all_sessions_in_parallel
+
+    @classmethod
+    def get_sessions_after(cls, session_code: str | None = None) -> list[str] | None:
+        if session_code:
+            return cls.all_sessions_after.get(session_code)
+        return cls.all_sessions_after
+
+    @classmethod
+    def get_sessions_before(cls, session_code: str | None = None) -> list[str] | None:
+        if session_code:
+            return cls.all_sessions_before.get(session_code)
+        return cls.all_sessions_before
+
+    @classmethod
+    def get_next_session(cls, session_code: str | None = None) -> str | None:
+        if session_code:
+            return cls.all_next_session.get(session_code)
+        return cls.all_next_session
+
+    @classmethod
+    def get_prev_session(cls, session_code: str | None = None) -> str | None:
+        if session_code:
+            return cls.all_prev_session.get(session_code)
+        return cls.all_prev_session
 
     @staticmethod
-    def compute_talks_in_parallel(
-        session: PretalxSession, all_sessions: list[PretalxSession]
+    def compute_sessions_in_parallel(
+        session: PretalxSubmission, all_sessions: list[PretalxSubmission]
     ) -> list[str]:
-        talks_parallel = []
+        sessions_parallel = []
         for other_session in all_sessions:
             if (
                 other_session.code == session.code
@@ -117,15 +150,15 @@ class TimingRelationship:
 
             # If they intersect, they are in parallel
             if other_session.start < session.end and other_session.end > session.start:
-                talks_parallel.append(other_session.code)
+                sessions_parallel.append(other_session.code)
 
-        return talks_parallel
+        return sessions_parallel
 
     @staticmethod
-    def compute_talks_after(
-        session: PretalxSession,
-        all_sessions: list[PretalxSession],
-        talks_in_parallel: list[str] = [],
+    def compute_sessions_after(
+        session: PretalxSubmission,
+        all_sessions: list[PretalxSubmission],
+        sessions_in_parallel: list[str],
     ) -> dict[str, list[str] | str | None]:
         # Sort sessions based on start time, early first
         all_sessions_sorted = sorted(
@@ -138,7 +171,7 @@ class TimingRelationship:
             for other_session in all_sessions_sorted
             if other_session.start is not None
             and other_session.start >= session.end
-            and other_session.code not in talks_in_parallel
+            and other_session.code not in sessions_in_parallel
             and other_session.code != session.code
             and other_session.start.day == session.start.day
             and not other_session.submission_type
@@ -148,7 +181,7 @@ class TimingRelationship:
 
         # Add sessions to the list if they are in different rooms
         seen_rooms = set()
-        unique_sessions = []
+        unique_sessions: list[PretalxSubmission] = []
 
         for other_session in remaining_sessions:
             if other_session.room not in seen_rooms:
@@ -161,26 +194,26 @@ class TimingRelationship:
                 s for s in unique_sessions if s.submission_type == "Keynote"
             ]
 
-        # Set the next talks in all rooms
-        talks_after = [s.code for s in unique_sessions]
+        # Set the next sessions in all rooms
+        sessions_after = [s.code for s in unique_sessions]
 
-        # Set the next talk in the same room, or a keynote
-        next_talk = None
+        # Set the next session in the same room, or a keynote
+        next_session = None
         for other_session in unique_sessions:
             if (
                 other_session.room == session.room
                 or other_session.submission_type == "Keynote"
             ):
-                next_talk = other_session.code
+                next_session = other_session.code
                 break
 
-        return {"talks_after": talks_after, "next_talk": next_talk}
+        return {"sessions_after": sessions_after, "next_session": next_session}
 
     @staticmethod
-    def compute_talks_before(
-        session: PretalxSession,
-        all_sessions: list[PretalxSession],
-        talks_in_parallel: list[str] = [],
+    def compute_sessions_before(
+        session: PretalxSubmission,
+        all_sessions: list[PretalxSubmission],
+        sessions_in_parallel: list[str],
     ) -> dict[str, list[str] | str | None]:
         # Sort sessions based on start time, late first
         all_sessions_sorted = sorted(
@@ -193,7 +226,7 @@ class TimingRelationship:
             other_session
             for other_session in all_sessions_sorted
             if other_session.start is not None
-            and other_session.code not in talks_in_parallel
+            and other_session.code not in sessions_in_parallel
             and other_session.start <= session.start
             and other_session.code != session.code
             and other_session.start.day == session.start.day
@@ -208,18 +241,35 @@ class TimingRelationship:
                 unique_sessions.append(other_session)
                 seen_rooms.add(other_session.room)
 
-        talks_before = [session.code for session in unique_sessions]
+        sessions_before = [session.code for session in unique_sessions]
 
-        prev_talk = None
+        prev_session = None
         for other_session in unique_sessions:
             if other_session.room == session.room:
-                prev_talk = other_session.code
+                prev_session = other_session.code
                 break
 
-        return {"talks_before": talks_before, "prev_talk": prev_talk}
+        return {"sessions_before": sessions_before, "prev_session": prev_session}
 
 
 class PretalxSpeaker(BaseModel):
+    """
+    Model for Pretalx speaker data
+    """
+
+    code: str
+    name: str
+    biography: str | None = None
+    avatar: str
+    submissions: list[str]
+    answers: list[PretalxAnswer]
+
+
+class EuroPythonSpeaker(BaseModel):
+    """
+    Model for EuroPython speaker data, transformed from Pretalx data
+    """
+
     code: str
     name: str
     biography: str | None = None
@@ -238,10 +288,9 @@ class PretalxSpeaker(BaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def extract(cls, values) -> dict:
+    def extract_answers(cls, values) -> dict:
         answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
-        # Extract the answers
         for answer in answers:
             if answer.question_text == SpeakerQuestion.affiliation:
                 values["affiliation"] = answer.answer_text
@@ -267,14 +316,13 @@ class PretalxSpeaker(BaseModel):
             if answer.question_text == SpeakerQuestion.gitx:
                 values["gitx"] = answer.answer_text.strip().split()[0]
 
-        # Set the slug
-        values["slug"] = slugify(values["name"])
-
         return values
 
-    # Extract the twitter URL from the answer
     @staticmethod
     def extract_twitter_url(text: str) -> str:
+        """
+        Extract the Twitter URL from the answer
+        """
         if text.startswith("@"):
             twitter_url = f"https://x.com/{text[1:]}"
         elif not text.startswith(("https://", "http://", "www.")):
@@ -286,9 +334,11 @@ class PretalxSpeaker(BaseModel):
 
         return twitter_url.split("?")[0]
 
-    # If it's like @user@instance, we need to convert it to a URL
     @staticmethod
     def extract_mastodon_url(text: str) -> str:
+        """
+        Extract the Mastodon URL from the answer, handle @username@instance format
+        """
         if not text.startswith(("https://", "http://")) and text.count("@") == 2:
             mastodon_url = f"https://{text.split('@')[2]}/@{text.split('@')[1]}"
         else:
@@ -298,9 +348,11 @@ class PretalxSpeaker(BaseModel):
 
         return mastodon_url.split("?")[0]
 
-    # Extract the linkedin URL from the answer
     @staticmethod
     def extract_linkedin_url(text: str) -> str:
+        """
+        Extract the LinkedIn URL from the answer
+        """
         if text.startswith("in/"):
             linkedin_url = f"https://linkedin.com/{text}"
         elif not text.startswith(("https://", "http://", "www.")):
@@ -313,28 +365,24 @@ class PretalxSpeaker(BaseModel):
         return linkedin_url.split("?")[0]
 
 
-class PretalxSession(BaseModel):
+class PretalxSubmission(BaseModel):
     """
-    Model for only confirmed and accepted sessions
+    Model for Pretalx submission data
     """
 
     code: str
     title: str
     speakers: list[str]  # We only want the code, not the full info
     submission_type: str
-    slug: str
     track: str | None = None
-    state: str
-    abstract: str
-    tweet: str = ""
-    duration: str
-    level: str = ""
-    delivery: str = ""
+    state: SubmissionState
+    abstract: str = ""
+    duration: str = ""
     resources: list[dict[str, str]] | None = None
-    answers: list[PretalxAnswer] = Field(..., exclude=True)
+    answers: list[PretalxAnswer]
     slot: PretalxSlot | None = Field(..., exclude=True)
 
-    # Extracted
+    # Extracted from slot data
     room: str | None = None
     start: datetime | None = None
     end: datetime | None = None
@@ -358,44 +406,63 @@ class PretalxSession(BaseModel):
     def handle_resources(cls, v) -> list[dict[str, str]] | None:
         return v or None
 
+    @model_validator(mode="before")
+    @classmethod
+    def process_values(cls, values) -> dict:
+        values["speakers"] = sorted([s["code"] for s in values["speakers"]])
+
+        # Set slot information
+        if values.get("slot"):
+            slot = PretalxSlot.model_validate(values["slot"])
+            values["room"] = slot.room
+            values["start"] = slot.start
+            values["end"] = slot.end
+
+        return values
+
+    @property
+    def is_publishable(self) -> bool:
+        return self.state in (SubmissionState.accepted, SubmissionState.confirmed)
+
+
+class EuroPythonSession(BaseModel):
+    """
+    Model for EuroPython session data, transformed from Pretalx data
+    """
+
+    code: str
+    title: str
+    speakers: list[str]
+    session_type: str
+    slug: str
+    track: str | None = None
+    abstract: str = ""
+    tweet: str = ""
+    duration: str = ""
+    level: str = ""
+    delivery: str = ""
+    resources: list[dict[str, str]] | None = None
+    room: str | None = None
+    start: datetime | None = None
+    end: datetime | None = None
+    answers: list[PretalxAnswer] = Field(..., exclude=True)
+    sessions_in_parallel: list[str] | None = None
+    sessions_after: list[str] | None = None
+    sessions_before: list[str] | None = None
+    next_session: str | None = None
+    prev_session: str | None = None
+
     @computed_field
     def website_url(self) -> str:
         return (
             f"https://ep{Config.event.split('-')[1]}.europython.eu/session/{self.slug}"
         )
 
-    @computed_field
-    def talks_in_parallel(self) -> list[str] | None:
-        if self.start and self.end:
-            return TimingRelationship.get_relationships(self.code)["talks_in_parallel"]
-
-    @computed_field
-    def talks_after(self) -> list[str] | None:
-        if self.start and self.end:
-            return TimingRelationship.get_relationships(self.code)["talks_after"]
-
-    @computed_field
-    def talks_before(self) -> list[str] | None:
-        if self.start and self.end:
-            return TimingRelationship.get_relationships(self.code)["talks_before"]
-
-    @computed_field
-    def next_talk(self) -> str | None:
-        if self.start and self.end:
-            return TimingRelationship.get_relationships(self.code)["next_talk"]
-
-    @computed_field
-    def prev_talk(self) -> str | None:
-        if self.start and self.end:
-            return TimingRelationship.get_relationships(self.code)["prev_talk"]
-
     @model_validator(mode="before")
     @classmethod
-    def extract(cls, values) -> dict:
-        values["speakers"] = sorted([s["code"] for s in values["speakers"]])
+    def extract_answers(cls, values) -> dict:
         answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
-        # Extract the answers
         for answer in answers:
             # TODO if we need any other questions
             if answer.question_text == SubmissionQuestion.tweet:
@@ -410,200 +477,257 @@ class PretalxSession(BaseModel):
             if answer.question_text == SubmissionQuestion.level:
                 values["level"] = answer.answer_text.lower()
 
-        # Set slot information
-        if values.get("slot"):
-            slot = PretalxSlot.model_validate(values["slot"])
-            values["room"] = slot.room
-            values["start"] = slot.start
-            values["end"] = slot.end
-
-        # Set the slug
-        values["slug"] = slugify(values["title"])
-
         return values
 
 
-class PretalxData(RootModel):
-    root: list[PretalxSession | PretalxSpeaker]
+class Parse:
+    @staticmethod
+    def publishable_submissions(input_file: str) -> dict[str, PretalxSubmission]:
+        """
+        Returns only publishable submissions
+        """
+        with open(input_file) as fd:
+            js = json.load(fd)
+            all_submissions = [PretalxSubmission.model_validate(s) for s in js]
+            publishable_submissions = [s for s in all_submissions if s.is_publishable]
+            publishable_submissions_by_code = {
+                s.code: s for s in publishable_submissions
+            }
+
+        return publishable_submissions_by_code
 
     @staticmethod
-    def replace_duplicate_slugs(objects: list[PretalxSession | PretalxSpeaker]):
+    def publishable_speakers(
+        input_file: str,
+        publishable_sessions_keys: KeysView[str],
+    ) -> dict[str, PretalxSpeaker]:
+        """
+        Returns only speakers with publishable sessions
+        """
+        with open(input_file) as fd:
+            js = json.load(fd)
+            all_speakers = [PretalxSpeaker.model_validate(s) for s in js]
+            speakers_with_publishable_sessions = [
+                s
+                for s in all_speakers
+                if Utils.publishable_sessions_of_speaker(s, publishable_sessions_keys)
+            ]
+            publishable_speakers_by_code = {
+                s.code: s for s in speakers_with_publishable_sessions
+            }
+
+        return publishable_speakers_by_code
+
+
+class Utils:
+    @staticmethod
+    def publishable_sessions_of_speaker(
+        speaker: PretalxSpeaker, accepted_proposals: KeysView[str]
+    ) -> set[str]:
+        return set(speaker.submissions) & accepted_proposals
+
+    @staticmethod
+    def find_duplicate_attributes(objects, attributes):
+        """
+        Find duplicates in the given objects based on the given attributes
+
+        Returns: dict[attribute_value, list[object_code]]
+        """
+        duplicates = {}
+        for obj in objects.values():
+            for attribute in attributes:
+                value = getattr(obj, attribute)
+                if value in duplicates:
+                    duplicates[value].append(obj.code)
+                else:
+                    duplicates[value] = [obj.code]
+
+        return duplicates
+
+    @staticmethod
+    def replace_duplicate_slugs(code_to_slug: dict[str, str]) -> dict[str, str]:
         slug_count: dict[str, int] = {}
         seen_slugs: set[str] = set()
 
-        for obj in objects:
-            original_slug = obj.slug
+        for code, slug in code_to_slug.items():
+            original_slug = slug
 
             if original_slug in seen_slugs:
                 if original_slug in slug_count:
                     slug_count[original_slug] += 1
                 else:
                     slug_count[original_slug] = 1
-                obj.slug = f"{original_slug}-{slug_count[original_slug]}"
+                code_to_slug[code] = f"{original_slug}-{slug_count[original_slug]}"
             else:
                 seen_slugs.add(original_slug)
 
+        return code_to_slug
 
-class PretalxSubmissions(PretalxData):
-    root: list[PretalxSession]
-
-    @model_validator(mode="before")
-    @classmethod
-    def initiate_publishable_sessions(cls, root) -> list[PretalxSession]:
+    @staticmethod
+    def warn_duplicates(
+        session_attributes_to_check: list[str],
+        speaker_attributes_to_check: list[str],
+        sessions_to_check: dict[str, EuroPythonSession],
+        speakers_to_check: dict[str, PretalxSpeaker],
+    ) -> None:
         """
-        Returns only the publishable sessions
+        Warns about duplicate attributes in the given objects
         """
-        sessions = []
-        for submission in root:
-            if cls.is_submission_publishable(submission):
-                sessions.append(PretalxSession.model_validate(submission))
-
-        # Sort by start time (early first) for deterministic slug replacement
-        sessions = sorted(sessions, key=lambda x: (x.start is None, x.start))
-
-        cls.replace_duplicate_slugs(sessions)
-
-        # Compute the relationships of all sessions
-        TimingRelationship.compute_relationships(
-            [s for s in sessions if s.start and s.end]
+        print(
+            f"Checking for duplicate {'s, '.join(session_attributes_to_check)}s in sessions..."
         )
+        duplicate_sessions = Utils.find_duplicate_attributes(
+            sessions_to_check, session_attributes_to_check
+        )
+
+        for attribute, codes in duplicate_sessions.items():
+            if len(codes) > 1:
+                print(f"Duplicate ``{attribute}`` in sessions: {codes}")
+
+        print(
+            f"Checking for duplicate {'s, '.join(speaker_attributes_to_check)}s in speakers..."
+        )
+        duplicate_speakers = Utils.find_duplicate_attributes(
+            speakers_to_check, speaker_attributes_to_check
+        )
+
+        for attribute, codes in duplicate_speakers.items():
+            if len(codes) > 1:
+                print(f"Duplicate ``{attribute}`` in speakers: {codes}")
+
+    @staticmethod
+    def compute_unique_slugs_by_attribute(
+        objects: dict[str, BaseModel], attribute: str
+    ):
+        """
+        Compute the slugs based on the given attribute
+        and replace the duplicate slugs with incrementing
+        numbers at the end.
+
+        Returns: dict[code, slug]
+        """
+        object_code_to_slug = {}
+        for obj in objects.values():
+            object_code_to_slug[obj.code] = slugify(getattr(obj, attribute))
+
+        return Utils.replace_duplicate_slugs(object_code_to_slug)
+
+    @staticmethod
+    def write_to_file(output_file: str, data: dict[str, BaseModel]):
+        with open(output_file, "w") as fd:
+            json.dump(
+                {k: json.loads(v.model_dump_json()) for k, v in data.items()},
+                fd,
+                indent=2,
+            )
+
+
+class Transform:
+    @staticmethod
+    def pretalx_submissions_to_europython_sessions(
+        submissions: dict[str, PretalxSubmission],
+    ) -> dict[str, EuroPythonSession]:
+        """
+        Transforms the given Pretalx submissions to EuroPython sessions
+        """
+        # Sort the submissions based on start time for deterministic slug computation
+        submissions = {
+            k: v
+            for k, v in sorted(
+                submissions.items(),
+                key=lambda item: (item[1].start is None, item[1].start),
+            )
+        }
+
+        session_code_to_slug = Utils.compute_unique_slugs_by_attribute(
+            submissions, "title"
+        )
+
+        sessions = {}
+        for code, submission in submissions.items():
+            session = EuroPythonSession(
+                code=submission.code,
+                title=submission.title,
+                speakers=submission.speakers,
+                session_type=submission.submission_type,
+                slug=session_code_to_slug[submission.code],
+                track=submission.track,
+                abstract=submission.abstract,
+                duration=submission.duration,
+                resources=submission.resources,
+                room=submission.room,
+                start=submission.start,
+                end=submission.end,
+                answers=submission.answers,
+                sessions_in_parallel=TimingRelationships.get_sessions_in_parallel(
+                    submission.code
+                ),
+                sessions_after=TimingRelationships.get_sessions_after(submission.code),
+                sessions_before=TimingRelationships.get_sessions_before(
+                    submission.code
+                ),
+                next_session=TimingRelationships.get_next_session(submission.code),
+                prev_session=TimingRelationships.get_prev_session(submission.code),
+            )
+            sessions[code] = session
 
         return sessions
 
     @staticmethod
-    def is_submission_publishable(submission: dict) -> bool:
-        return submission.get("state") in (
-            SubmissionState.accepted,
-            SubmissionState.confirmed,
-        )
-
-
-class PretalxSpeakers(PretalxData):
-    root: list[PretalxSpeaker]
-
-    # Overriden to be able to pass the accepted_proposals
-    @model_validator(mode="before")
-    @classmethod
-    def initiate_publishable_speakers(
-        cls, root, context: ValidationInfo
-    ) -> list[PretalxSpeaker]:
+    def pretalx_speakers_to_europython_speakers(
+        speakers: dict[str, PretalxSpeaker],
+    ) -> dict[str, EuroPythonSpeaker]:
         """
-        Returns only speakers with publishable sessions
+        Transforms the given Pretalx speakers to EuroPython speakers
         """
-        accepted_proposals = context.context["accepted_proposals"]
-        speakers = []
-        for speaker in root:
-            # Overwrite the submissions with only the publishable ones
-            if submissions := cls.is_speaker_publishable(speaker, accepted_proposals):
-                speaker = PretalxSpeaker.model_validate(speaker)
-                speaker.submissions = list(submissions)
-                speakers.append(speaker)
+        # Sort the speakers based on code for deterministic slug computation
+        speakers = {k: v for k, v in sorted(speakers.items(), key=lambda item: item[0])}
 
-        # Sort by code for deterministic slug replacement
-        speakers = sorted(speakers, key=lambda x: x.code)
+        speaker_code_to_slug = Utils.compute_unique_slugs_by_attribute(speakers, "name")
 
-        cls.replace_duplicate_slugs(speakers)
+        euro_python_speakers = {}
+        for code, speaker in speakers.items():
+            euro_python_speaker = EuroPythonSpeaker(
+                code=speaker.code,
+                name=speaker.name,
+                biography=speaker.biography,
+                avatar=speaker.avatar,
+                slug=speaker_code_to_slug[speaker.code],
+                answers=speaker.answers,
+                submissions=speaker.submissions,
+            )
+            euro_python_speakers[code] = euro_python_speaker
 
-        return speakers
-
-    @staticmethod
-    def is_speaker_publishable(
-        speaker: dict, accepted_proposals: KeysView[str]
-    ) -> set[str]:
-        return set(speaker.get("submissions")) & accepted_proposals
-
-
-def parse_publishable_submissions() -> dict[str, PretalxSession]:
-    """
-    Returns only publishable sessions
-    """
-    with open(Config.raw_path / "submissions_latest.json") as fd:
-        js = json.load(fd)
-        subs = PretalxSubmissions.model_validate(js).root
-        subs_dict = {s.code: s for s in subs}
-    return subs_dict
-
-
-def parse_publishable_speakers(
-    publishable_sessions: KeysView[str],
-) -> dict[str, PretalxSpeaker]:
-    """
-    Returns only speakers with publishable sessions
-    """
-    with open(Config.raw_path / "speakers_latest.json") as fd:
-        js = json.load(fd)
-        speakers = PretalxSpeakers.model_validate(
-            js, context={"accepted_proposals": publishable_sessions}
-        ).root
-        speakers_dict = {s.code: s for s in speakers}
-    return speakers_dict
-
-
-def save_publishable_sessions(sessions: dict[str, PretalxSession]):
-    path = Config.public_path / "sessions.json"
-
-    data = {k: json.loads(v.model_dump_json()) for k, v in sessions.items()}
-    with open(path, "w") as fd:
-        json.dump(data, fd, indent=2)
-
-
-def save_publishable_speakers(speakers: dict[str, PretalxSpeaker]):
-    path = Config.public_path / "speakers.json"
-
-    data = {k: v.model_dump() for k, v in speakers.items()}
-    with open(path, "w") as fd:
-        json.dump(data, fd, indent=2)
-
-
-def save_all(
-    publishable_sessions: dict[str, PretalxSession],
-    publishable_speakers: dict[str, PretalxSpeaker],
-):
-    Config.public_path.mkdir(parents=True, exist_ok=True)
-
-    save_publishable_sessions(publishable_sessions)
-    save_publishable_speakers(publishable_speakers)
-
-
-def check_duplicate_slugs(
-    publishable_sessions: dict[str, PretalxSession],
-    publishable_speakers: dict[str, PretalxSpeaker],
-) -> bool:
-    session_slugs = [s.slug for s in publishable_sessions.values()]
-    speaker_slugs = [s.slug for s in publishable_speakers.values()]
-
-    session_duplicates = [
-        slug for slug in set(session_slugs) if session_slugs.count(slug) > 1
-    ]
-    speaker_duplicates = [
-        slug for slug in set(speaker_slugs) if speaker_slugs.count(slug) > 1
-    ]
-
-    if session_duplicates or speaker_duplicates:
-        print("Found duplicate slugs:")
-        for slug in session_duplicates:
-            print(f"Session: {slug}")
-        for slug in speaker_duplicates:
-            print(f"Speaker: {slug}")
-        return False
-    return True
+        return euro_python_speakers
 
 
 if __name__ == "__main__":
-    print(f"Transforming {Config.event} data...")
-    print("Checking for duplicate slugs...")
+    print(f"Parsing the data from {Config.raw_path}...")
+    pretalx_submissions = Parse.publishable_submissions(
+        Config.raw_path / "submissions_latest.json"
+    )
+    pretalx_speakers = Parse.publishable_speakers(
+        Config.raw_path / "speakers_latest.json", pretalx_submissions.keys()
+    )
 
-    publishable_sessions = parse_publishable_submissions()
+    print("Computing timing relationships...")
+    TimingRelationships.compute(pretalx_submissions.values())
 
-    # Pass only the keys (session codes)
-    publishable_speakers = parse_publishable_speakers(publishable_sessions.keys())
+    print("Transforming the data...")
+    ep_sessions = Transform.pretalx_submissions_to_europython_sessions(
+        pretalx_submissions
+    )
+    ep_speakers = Transform.pretalx_speakers_to_europython_speakers(pretalx_speakers)
 
-    if not check_duplicate_slugs(publishable_sessions, publishable_speakers) and (
-        len(sys.argv) <= 1 or sys.argv[1] != "--allow-dupes"
-    ):
-        print("Exiting. Use ``make transform ALLOW_DUPES=true`` to continue.")
-        sys.exit(1)
+    # Warn about duplicates if the flag is set
+    if len(sys.argv) > 1 and sys.argv[1] == "--warn-dupes":
+        Utils.warn_duplicates(
+            session_attributes_to_check=["slug"],
+            speaker_attributes_to_check=["slug"],
+            sessions_to_check=ep_sessions,
+            speakers_to_check=ep_speakers,
+        )
 
-    print("Saving publishable data...")
-    save_all(publishable_sessions, publishable_speakers)
-    print("Done")
+    print(f"Writing the data to {Config.public_path}...")
+    Utils.write_to_file(Config.public_path / "sessions.json", ep_sessions)
+    Utils.write_to_file(Config.public_path / "speakers.json", ep_speakers)

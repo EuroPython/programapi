@@ -31,7 +31,7 @@ You can change the event in the [``config.py``](src/config.py) file. It is set t
 
 ## API
 
-The API is served at ``programapi24.europython.eu/2024``. It has two endpoints (for now):
+The API is served at ``https://programapi24.europython.eu/2024``. It has two endpoints (for now):
 
 - ``/speakers.json``: Returns the list of confirmed speakers.
 - ``/sessions.json``: Returns the list of confirmed sessions.
