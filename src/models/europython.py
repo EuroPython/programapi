@@ -28,6 +28,12 @@ class EuroPythonSpeaker(BaseModel):
     linkedin_url: str | None = None
     gitx: str | None = None
 
+    @computed_field
+    def website_url(self) -> str:
+        return (
+            f"https://ep{Config.event.split('-')[1]}.europython.eu/speaker/{self.slug}"
+        )
+
     @model_validator(mode="before")
     @classmethod
     def extract_answers(cls, values) -> dict:

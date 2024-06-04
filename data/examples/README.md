@@ -136,3 +136,4 @@ The fields are as follows:
 | `linkedin_url` | `string` \| `null` | URL of the speaker's LinkedIn profile                                 |
 | `twitter_url`  | `string` \| `null` | URL of the speaker's Twitter profile                                  |
 | `mastodon_url` | `string` \| `null` | URL of the speaker's Mastodon profile                                 |
+| `website_url`  | `string`           | URL of the speaker's profile on the conference website                |
