@@ -1,13 +1,15 @@
 import json
 
-from src.transform import Parse, TimingRelationships, Transform
+from src.utils.parse import Parse
+from src.utils.timing_relationships import TimingRelationships
+from src.utils.transform import Transform
 
 pretalx_submissions = Parse.publishable_submissions(
     "./data/examples/pretalx/submissions.json"
 )
 
 
-def test_e2e_sessions():
+def test_e2e_sessions() -> None:
     TimingRelationships.compute(pretalx_submissions.values())
 
     ep_sessions = Transform.pretalx_submissions_to_europython_sessions(
@@ -23,7 +25,7 @@ def test_e2e_sessions():
     assert ep_sessions_dump == ep_sessions_expected
 
 
-def test_e2e_speakers():
+def test_e2e_speakers() -> None:
     pretalx_speakers = Parse.publishable_speakers(
         "./data/examples/pretalx/speakers.json", pretalx_submissions.keys()
     )
