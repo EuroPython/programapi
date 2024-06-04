@@ -25,9 +25,9 @@ class Transform:
             submissions, "title"
         )
 
-        sessions = {}
+        ep_sessions = {}
         for code, submission in submissions.items():
-            session = EuroPythonSession(
+            ep_session = EuroPythonSession(
                 code=submission.code,
                 title=submission.title,
                 speakers=submission.speakers,
@@ -51,9 +51,9 @@ class Transform:
                 next_session=TimingRelationships.get_next_session(submission.code),
                 prev_session=TimingRelationships.get_prev_session(submission.code),
             )
-            sessions[code] = session
+            ep_sessions[code] = ep_session
 
-        return sessions
+        return ep_sessions
 
     @staticmethod
     def pretalx_speakers_to_europython_speakers(
@@ -67,9 +67,9 @@ class Transform:
 
         speaker_code_to_slug = Utils.compute_unique_slugs_by_attribute(speakers, "name")
 
-        euro_python_speakers = {}
+        ep_speakers = {}
         for code, speaker in speakers.items():
-            euro_python_speaker = EuroPythonSpeaker(
+            ep_speaker = EuroPythonSpeaker(
                 code=speaker.code,
                 name=speaker.name,
                 biography=speaker.biography,
@@ -78,6 +78,6 @@ class Transform:
                 answers=speaker.answers,
                 submissions=speaker.submissions,
             )
-            euro_python_speakers[code] = euro_python_speaker
+            ep_speakers[code] = ep_speaker
 
-        return euro_python_speakers
+        return ep_speakers
