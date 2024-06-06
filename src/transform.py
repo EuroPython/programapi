@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field, field_validator, model_validator, computed_field
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 from slugify import slugify
 
 from src.config import Config
@@ -13,6 +13,8 @@ class SpeakerQuestion:
     homepage = "Social (Homepage)"
     twitter = "Social (X/Twitter)"
     mastodon = "Social (Mastodon)"
+    linkedin = "Social (LinkedIn)"
+    gitx = "Social (Github/Gitlab)"
 
 
 class SubmissionQuestion:
