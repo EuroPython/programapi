@@ -20,7 +20,6 @@ else
 	python -m src.transform
 endif
 
-
 all: download transform
 
 test:
