@@ -48,6 +48,8 @@ pyrepl==0.9.0
     # via fancycompleter
 pytest==8.2.1
     # via -r requirements.in
+python-dotenv==1.0.1
+    # via -r requirements.in
 python-slugify==8.0.4
     # via -r requirements.in
 pyyaml==6.0.1
