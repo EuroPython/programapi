@@ -2,7 +2,7 @@ import json
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from slugify import slugify
 
 from src.config import Config
@@ -34,13 +34,13 @@ class SubmissionState(Enum):
 class PretalxAnswer(BaseModel):
     question_text: str
     answer_text: str
-    answer_file: str | None
-    submission_id: str | None
-    speaker_id: str | None
+    answer_file: str | None = None
+    submission_id: str | None = None
+    speaker_id: str | None = None
 
     @model_validator(mode="before")
     @classmethod
-    def extract(cls, values):
+    def extract(cls, values) -> dict:
         values["question_text"] = values["question"]["question"]["en"]
         values["answer_text"] = values["answer"]
         values["answer_file"] = values["answer_file"]
@@ -49,122 +49,89 @@ class PretalxAnswer(BaseModel):
         return values
 
 
-class PretalxSpeaker(BaseModel):
-    code: str
-    name: str
-    biography: str | None
-    avatar: str | None
-    slug: str
-    answers: list[PretalxAnswer] = Field(..., exclude=True)
-    submissions: list[str]
-
-    # Extracted
-    affiliation: str | None = None
-    homepage: str | None = None
-    twitter: str | None = None
-    mastodon: str | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def extract(cls, values):
-        values["slug"] = slugify(values["name"])
-
-        answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
-
-        for answer in answers:
-            if answer.question_text == SpeakerQuestion.affiliation:
-                values["affiliation"] = answer.answer_text
-
-            if answer.question_text == SpeakerQuestion.homepage:
-                values["homepage"] = answer.answer_text
-
-            # NOTE: in practice the format of the data here is different,
-            # depending on the speaker. We could fix this here by parsing the
-            # the answer_text to some standardised format (either @handle or
-            # https://twitter.com/handle url, etc)
-            if answer.question_text == SpeakerQuestion.twitter:
-                values["twitter"] = answer.answer_text
-
-            if answer.question_text == SpeakerQuestion.mastodon:
-                values["mastodon"] = answer.answer_text
-
-        return values
-
-
-class PretalxSubmission(BaseModel):
-    code: str
-    title: str
-    speakers: list[str]  # We only want the code, not the full info
-    submission_type: str
-    slug: str
-    track: str | None
-    state: SubmissionState
-    abstract: str
-    answers: list[PretalxAnswer] = Field(..., exclude=True)
-    tweet: str = ""
-    duration: str
-
-    level: str = ""
-    delivery: str | None = ""
-
-    # This is embedding a slot inside a submission for easier lookup later
+class PretalxSlot(BaseModel):
     room: str | None = None
     start: datetime | None = None
     end: datetime | None = None
 
-    # TODO: once we have schedule data then we can prefill those in the code here
-    talks_in_parallel: list[str] | None = None
-    talks_after: list[str] | None = None
-    next_talk_code: str | None = None
-    prev_talk_code: str | None = None
+    @field_validator("room", mode="before")
+    @classmethod
+    def handle_localized(cls, v) -> str | None:
+        if isinstance(v, dict):
+            return v.get("en")
+        return v
 
-    website_url: str | None = None
+
+class PretalxSpeaker(BaseModel):
+    """
+    Model for Pretalx speaker data
+    """
+
+    code: str
+    name: str
+    biography: str | None = None
+    avatar: str
+    submissions: list[str]
+    answers: list[PretalxAnswer]
+
+
+class PretalxSubmission(BaseModel):
+    """
+    Model for Pretalx submission data
+    """
+
+    code: str
+    title: str
+    speakers: list[str]  # We only want the code, not the full info
+    submission_type: str
+    track: str | None = None
+    state: SubmissionState
+    abstract: str = ""
+    duration: str = ""
+    resources: list[dict[str, str]] | None = None
+    answers: list[PretalxAnswer]
+    slot: PretalxSlot | None = Field(..., exclude=True)
+
+    # Extracted from slot data
+    room: str | None = None
+    start: datetime | None = None
+    end: datetime | None = None
+
+    @field_validator("submission_type", "track", mode="before")
+    @classmethod
+    def handle_localized(cls, v) -> str | None:
+        if isinstance(v, dict):
+            return v.get("en")
+        return v
+
+    @field_validator("duration", mode="before")
+    @classmethod
+    def duration_to_string(cls, v) -> str:
+        if isinstance(v, int):
+            return str(v)
+        return v
+
+    @field_validator("resources", mode="before")
+    @classmethod
+    def handle_resources(cls, v) -> list[dict[str, str]] | None:
+        return v or None
 
     @model_validator(mode="before")
     @classmethod
-    def extract(cls, values):
-        # # SubmissionType and Track have localised names. For this project we
-        # # only care about their english versions, so we can extract them here
-        for field in ["submission_type", "track"]:
-            if values[field] is None:
-                continue
-            else:
-                # In 2024 some of those are localised, and some are not.
-                # Instead of figuring out why and fixing the data, there's this
-                # hack:
-                if isinstance(values[field], dict):
-                    values[field] = values[field]["en"]
-
+    def process_values(cls, values) -> dict:
         values["speakers"] = sorted([s["code"] for s in values["speakers"]])
 
-        answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
-
-        for answer in answers:
-            # TODO if we need any other questions
-            if answer.question_text == SubmissionQuestion.tweet:
-                values["tweet"] = answer.answer_text
-
-            if answer.question_text == SubmissionQuestion.delivery:
-                if "in-person" in answer.answer_text:
-                    values["delivery"] = "in-person"
-                else:
-                    values["delivery"] = "remote"
-
-            if answer.question_text == SubmissionQuestion.level:
-                values["level"] = answer.answer_text.lower()
-
-        # Convert duration to string for model validation
-        if isinstance(values["duration"], int):
-            values["duration"] = str(values["duration"])
-
-        slug = slugify(values["title"])
-        values["slug"] = slug
-        values["website_url"] = f"https://ep2024.europython.eu/session/{slug}"
+        # Set slot information
+        if values.get("slot"):
+            slot = PretalxSlot.model_validate(values["slot"])
+            values["room"] = slot.room
+            values["start"] = slot.start
+            values["end"] = slot.end
 
         return values
 
     @property
-    def is_publishable(self):
+    def is_publishable(self) -> bool:
         return self.state in (SubmissionState.accepted, SubmissionState.confirmed)
 
 
