@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from enum import Enum
 
 from pydantic import BaseModel, Field, model_validator
 from slugify import slugify
@@ -21,10 +22,13 @@ class SubmissionQuestion:
     level = "Expected audience expertise"
 
 
-class SubmissionState:
+class SubmissionState(Enum):
     accepted = "accepted"
     confirmed = "confirmed"
     withdrawn = "withdrawn"
+    rejected = "rejected"
+    canceled = "canceled"
+    submitted = "submitted"
 
 
 class PretalxAnswer(BaseModel):
@@ -94,7 +98,7 @@ class PretalxSubmission(BaseModel):
     submission_type: str
     slug: str
     track: str | None
-    state: str
+    state: SubmissionState
     abstract: str
     answers: list[PretalxAnswer] = Field(..., exclude=True)
     tweet: str = ""
