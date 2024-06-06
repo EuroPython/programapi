@@ -164,16 +164,8 @@ class PretalxSubmission(BaseModel):
         return values
 
     @property
-    def is_accepted(self):
-        return self.state == SubmissionState.accepted
-
-    @property
-    def is_confirmed(self):
-        return self.state == SubmissionState.confirmed
-
-    @property
     def is_publishable(self):
-        return self.is_accepted or self.is_confirmed
+        return self.state in (SubmissionState.accepted, SubmissionState.confirmed)
 
 
 def parse_submissions() -> list[PretalxSubmission]:
