@@ -415,62 +415,43 @@ class Utils:
             )
 
 
-def parse_submissions() -> list[PretalxSubmission]:
-    """
-    Returns only confirmed talks
-    """
-    with open(Config.raw_path / "submissions_latest.json") as fd:
-        js = json.load(fd)
-        subs = [PretalxSubmission.model_validate(item) for item in js]
-    return subs
+class Parse:
+    @staticmethod
+    def publishable_submissions(input_file: Path | str) -> dict[str, PretalxSubmission]:
+        """
+        Returns only publishable submissions
+        """
+        with open(input_file) as fd:
+            js = json.load(fd)
+            all_submissions = [PretalxSubmission.model_validate(s) for s in js]
+            publishable_submissions = [s for s in all_submissions if s.is_publishable]
+            publishable_submissions_by_code = {
+                s.code: s for s in publishable_submissions
+            }
 
+        return publishable_submissions_by_code
 
-def parse_speakers() -> list[PretalxSpeaker]:
-    """
-    Returns only speakers with confirmed talks
-    """
-    with open(Config.raw_path / "speakers_latest.json") as fd:
-        js = json.load(fd)
-        speakers = [PretalxSpeaker.model_validate(item) for item in js]
-    return speakers
+    @staticmethod
+    def publishable_speakers(
+        input_file: Path | str,
+        publishable_sessions_keys: KeysView[str],
+    ) -> dict[str, PretalxSpeaker]:
+        """
+        Returns only speakers with publishable sessions
+        """
+        with open(input_file) as fd:
+            js = json.load(fd)
+            all_speakers = [PretalxSpeaker.model_validate(s) for s in js]
+            speakers_with_publishable_sessions = [
+                s
+                for s in all_speakers
+                if Utils.publishable_sessions_of_speaker(s, publishable_sessions_keys)
+            ]
+            publishable_speakers_by_code = {
+                s.code: s for s in speakers_with_publishable_sessions
+            }
 
-
-def publishable_submissions() -> dict[str, PretalxSubmission]:
-    return {s.code: s for s in parse_submissions() if s.is_publishable}
-
-
-def publishable_speakers(accepted_proposals: set[str]) -> dict[str, PretalxSpeaker]:
-    sp = parse_speakers()
-    output = {}
-    for speaker in sp:
-        accepted = set(speaker.submissions) & accepted_proposals
-        if accepted:
-            # Overwrite with only the accepted proposals
-            speaker.submissions = list(accepted)
-            output[speaker.code] = speaker
-
-    return output
-
-
-def save_publishable_sessions():
-    path = Config.public_path / "sessions.json"
-
-    publishable = publishable_submissions()
-
-    data = {k: v.model_dump() for k, v in publishable.items()}
-    with open(path, "w") as fd:
-        json.dump(data, fd, indent=2)
-
-
-def save_publishable_speakers():
-    path = Config.public_path / "speakers.json"
-
-    publishable = publishable_submissions()
-    speakers = publishable_speakers(publishable.keys())
-
-    data = {k: v.model_dump() for k, v in speakers.items()}
-    with open(path, "w") as fd:
-        json.dump(data, fd, indent=2)
+        return publishable_speakers_by_code
 
 
 if __name__ == "__main__":
