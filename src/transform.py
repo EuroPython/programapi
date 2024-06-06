@@ -1,4 +1,5 @@
 import json
+import sys
 from collections.abc import KeysView, ValuesView
 from datetime import datetime
 from enum import Enum
@@ -724,11 +725,32 @@ class Transform:
 
 
 if __name__ == "__main__":
-    print("Checking for duplicate slugs...")
-    assert len(set(s.slug for s in publishable_submissions().values())) == len(
-        publishable_submissions()
+    print(f"Parsing the data from {Config.raw_path}...")
+    pretalx_submissions = Parse.publishable_submissions(
+        Config.raw_path / "submissions_latest.json"
     )
-    print("Saving publishable data...")
-    save_publishable_sessions()
-    save_publishable_speakers()
-    print("Done")
+    pretalx_speakers = Parse.publishable_speakers(
+        Config.raw_path / "speakers_latest.json", pretalx_submissions.keys()
+    )
+
+    print("Computing timing relationships...")
+    TimingRelationships.compute(pretalx_submissions.values())
+
+    print("Transforming the data...")
+    ep_sessions = Transform.pretalx_submissions_to_europython_sessions(
+        pretalx_submissions
+    )
+    ep_speakers = Transform.pretalx_speakers_to_europython_speakers(pretalx_speakers)
+
+    # Warn about duplicates if the flag is set
+    if len(sys.argv) > 1 and sys.argv[1] == "--warn-dupes":
+        Utils.warn_duplicates(
+            session_attributes_to_check=["title"],
+            speaker_attributes_to_check=["name"],
+            sessions_to_check=ep_sessions,
+            speakers_to_check=ep_speakers,
+        )
+
+    print(f"Writing the data to {Config.public_path}...")
+    Utils.write_to_file(Config.public_path / "sessions.json", ep_sessions)
+    Utils.write_to_file(Config.public_path / "speakers.json", ep_speakers)
