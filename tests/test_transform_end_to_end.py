@@ -1,6 +1,8 @@
 import json
 
-from src.transform import Parse, TimingRelationships, Transform
+from src.utils.parse import Parse
+from src.utils.timing_relationships import TimingRelationships
+from src.utils.transform import Transform
 
 pretalx_submissions = Parse.publishable_submissions(
     "./data/examples/pretalx/submissions.json"
