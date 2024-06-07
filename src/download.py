@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 import requests
 from tqdm import tqdm
@@ -19,11 +20,13 @@ resources = [
     "speakers?questions=all",
 ]
 
+Config.raw_path.mkdir(parents=True, exist_ok=True)
+
 for resource in resources:
     url = base_url + f"{resource}"
 
-    res0 = []
-    data = {"next": url}
+    res0: list[dict[str, Any]] = []
+    data: dict[str, Any] = {"next": url}
     n = 0
 
     pbar = tqdm(desc=f"Downloading {resource}", unit=" page", dynamic_ncols=True)
