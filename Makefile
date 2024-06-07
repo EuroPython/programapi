@@ -14,8 +14,11 @@ download:
 	python -m src.download
 
 transform:
+ifeq ($(WARN_DUPES), true)
+	python -m src.transform --warn-dupes
+else
 	python -m src.transform
-
+endif
 
 all: download transform
 
