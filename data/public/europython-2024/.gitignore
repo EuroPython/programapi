@@ -1,4 +1,0 @@
-# In this folder we have public data
-# This may in the future actually end up in this repository
-# But for now it's a bit too much noise
-*.json
