@@ -1,0 +1,3 @@
+# JSON files except the ones in examples/
+*.json
+!examples/**
