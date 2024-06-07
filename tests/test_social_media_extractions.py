@@ -1,6 +1,6 @@
 import pytest
 
-from src.transform import EuroPythonSpeaker
+from src.models.europython import EuroPythonSpeaker
 
 
 @pytest.mark.parametrize(
