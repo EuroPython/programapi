@@ -2,7 +2,8 @@ pdbpp
 pytest
 pre-commit
 
-requests
 pydantic
+python-dotenv
 python-slugify
+requests
 tqdm
