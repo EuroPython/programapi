@@ -115,6 +115,8 @@ class Utils:
         output_file: Path | str,
         data: dict[str, EuroPythonSession] | dict[str, EuroPythonSpeaker],
     ) -> None:
+        Path(output_file).parent.absolute().mkdir(parents=True, exist_ok=True)
+
         with open(output_file, "w") as fd:
             json.dump(
                 {k: json.loads(v.model_dump_json()) for k, v in data.items()},
