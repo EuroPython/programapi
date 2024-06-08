@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
 from src.config import Config
-from src.misc import SpeakerQuestion, SubmissionQuestion
+from src.misc import EventType, Room, SpeakerQuestion, SubmissionQuestion
 from src.models.pretalx import PretalxAnswer
 
 
@@ -166,3 +166,54 @@ class EuroPythonSession(BaseModel):
                 values["level"] = answer.answer_text.lower()
 
         return values
+
+
+class EuroPythonScheduleSession(BaseModel):
+    """
+    Model for EuroPython schedule session data
+    """
+
+    event_type: EventType = EventType.SESSION
+    code: str
+    title: str
+    session_type: str
+    speakers: list[dict[str, str]]  # code, name, website_url
+    tweet: str
+    level: str
+    duration: int
+    room: Room
+    start: datetime = Field(..., exclude=True)
+    website_url: str
+
+    @computed_field
+    def start_times(self) -> list[datetime]:
+        """
+        Some sessions (tutorial, workshop) have multiple slots, therefore multiple start times
+        """
+        if "tutorial" in self.session_type.lower():
+            # Tutorials have 2 slots, 90 minutes each, with a 15-minute break in between
+            return [self.start, self.start + timedelta(minutes=90 + 15)]
+
+        if "workshop" in self.session_type.lower():
+            # Workshops have 4 slots, 90 minutes each, with 15-minute breaks in between, and a 1-hour lunch break after the 2nd slot
+            return [
+                self.start,
+                self.start + timedelta(minutes=90 + 15),
+                self.start + timedelta(minutes=90 + 15 + 90 + 60),
+                self.start + timedelta(minutes=90 + 15 + 90 + 60 + 90 + 15),
+            ]
+
+        else:
+            return [self.start]
+
+
+class EuroPythonScheduleBreak(BaseModel):
+    """
+    Model for EuroPython schedule break data
+    """
+
+    event_type: EventType = EventType.BREAK
+    title: str
+    duration: int
+    rooms: list[Room]
+    start: datetime

@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -107,3 +108,40 @@ class PretalxSubmission(BaseModel):
     @property
     def is_publishable(self) -> bool:
         return self.state in (SubmissionState.accepted, SubmissionState.confirmed)
+
+
+class PretalxScheduleBreak(BaseModel):
+    """
+    Model for Pretalx schedule break data
+    """
+
+    room: str
+    start: datetime
+    end: datetime
+    description: dict[str, str] | str
+
+    @field_validator("description", mode="before")
+    @classmethod
+    def handle_localized(cls, v) -> str | Any:
+        if isinstance(v, dict):
+            return v.get("en")
+        return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_slot_info(cls, values) -> dict:
+        slot = PretalxSlot.model_validate(values["slot"])
+        values["room"] = slot.room
+        values["start"] = slot.start
+        values["end"] = slot.end
+
+        return values
+
+
+class PretalxSchedule(BaseModel):
+    """
+    Model for Pretalx schedule data
+    """
+
+    slots: list[PretalxSubmission]
+    breaks: list[PretalxScheduleBreak]

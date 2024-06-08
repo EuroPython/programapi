@@ -12,6 +12,7 @@ headers = {
 }
 
 base_url = f"https://pretalx.com/api/events/{Config.event}/"
+schedule_url = base_url + "schedules/latest/"
 
 resources = [
     # Questions need to be passed to include answers in the same endpoint,
@@ -50,3 +51,17 @@ for resource in resources:
 
     with open(filepath, "w") as fd:
         json.dump(res0, fd)
+
+
+# Download schedule
+response = requests.get(schedule_url, headers=headers)
+
+if response.status_code != 200:
+    raise Exception(f"Error {response.status_code}: {response.text}")
+
+data = response.json()
+filename = "schedule_latest.json"
+filepath = Config.raw_path / filename
+
+with open(filepath, "w") as fd:
+    json.dump(data, fd)
