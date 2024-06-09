@@ -186,7 +186,7 @@ class EuroPythonScheduleSession(BaseModel):
     total_duration: int = Field(..., exclude=True)
     room: Room
     start: datetime
-    slot_count: int
+    slot_count: int = Field(..., exclude=True)
     website_url: str
 
     @computed_field
