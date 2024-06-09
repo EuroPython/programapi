@@ -1,4 +1,6 @@
-from datetime import datetime, timedelta
+from __future__ import annotations
+
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
@@ -139,6 +141,7 @@ class EuroPythonSession(BaseModel):
     sessions_before: list[str] | None = None
     next_session: str | None = None
     prev_session: str | None = None
+    slot_count: int = Field(..., exclude=True)
 
     @computed_field
     def website_url(self) -> str:
@@ -180,31 +183,15 @@ class EuroPythonScheduleSession(BaseModel):
     speakers: list[dict[str, str]]  # code, name, website_url
     tweet: str
     level: str
-    duration: int
+    total_duration: int = Field(..., exclude=True)
     room: Room
-    start: datetime = Field(..., exclude=True)
+    start: datetime
+    slot_count: int
     website_url: str
 
     @computed_field
-    def start_times(self) -> list[datetime]:
-        """
-        Some sessions (tutorial, workshop) have multiple slots, therefore multiple start times
-        """
-        if "tutorial" in self.session_type.lower():
-            # Tutorials have 2 slots, 90 minutes each, with a 15-minute break in between
-            return [self.start, self.start + timedelta(minutes=90 + 15)]
-
-        if "workshop" in self.session_type.lower():
-            # Workshops have 4 slots, 90 minutes each, with 15-minute breaks in between, and a 1-hour lunch break after the 2nd slot
-            return [
-                self.start,
-                self.start + timedelta(minutes=90 + 15),
-                self.start + timedelta(minutes=90 + 15 + 90 + 60),
-                self.start + timedelta(minutes=90 + 15 + 90 + 60 + 90 + 15),
-            ]
-
-        else:
-            return [self.start]
+    def duration(self) -> int:
+        return self.total_duration // self.slot_count
 
 
 class EuroPythonScheduleBreak(BaseModel):
@@ -217,3 +204,34 @@ class EuroPythonScheduleBreak(BaseModel):
     duration: int
     rooms: list[Room]
     start: datetime
+
+
+class DaySchedule(BaseModel):
+    rooms: list[Room]
+    events: list[EuroPythonScheduleSession | EuroPythonScheduleBreak]
+
+
+class Schedule(BaseModel):
+    days: dict[date, DaySchedule]
+
+    @classmethod
+    def from_events(
+        cls, events: list[EuroPythonScheduleSession | EuroPythonScheduleBreak]
+    ) -> Schedule:
+        day_dict = {}
+        for event in events:
+            event_date = event.start.date()
+            if event_date not in day_dict:
+                day_dict[event_date] = {"rooms": list(set(event.rooms)), "events": []}
+            else:
+                day_dict[event_date]["rooms"] = list(
+                    set(
+                        day_dict[event_date]["rooms"] + [event.room]
+                        if event.event_type is EventType.SESSION
+                        else event.rooms
+                    )
+                )
+            day_dict[event_date]["events"].append(event)
+
+        day_schedule_dict = {k: DaySchedule(**v) for k, v in day_dict.items()}
+        return cls(days=day_schedule_dict)

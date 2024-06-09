@@ -66,6 +66,7 @@ class PretalxSubmission(BaseModel):
     resources: list[dict[str, str]] | None = None
     answers: list[PretalxAnswer]
     slot: PretalxSlot | None = Field(..., exclude=True)
+    slot_count: int = Field(..., exclude=True)
 
     # Extracted from slot data
     room: str | None = None
@@ -130,7 +131,7 @@ class PretalxScheduleBreak(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def set_slot_info(cls, values) -> dict:
-        slot = PretalxSlot.model_validate(values["slot"])
+        slot = PretalxSlot.model_validate(values)
         values["room"] = slot.room
         values["start"] = slot.start
         values["end"] = slot.end

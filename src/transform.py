@@ -14,6 +14,7 @@ if __name__ == "__main__":
     pretalx_speakers = Parse.publishable_speakers(
         Config.raw_path / "speakers_latest.json", pretalx_submissions.keys()
     )
+    pretalx_schedule = Parse.schedule(Config.raw_path / "schedule_latest.json")
 
     print("Computing timing relationships...")
     TimingRelationships.compute(pretalx_submissions.values())
@@ -23,6 +24,9 @@ if __name__ == "__main__":
         pretalx_submissions
     )
     ep_speakers = Transform.pretalx_speakers_to_europython_speakers(pretalx_speakers)
+    ep_schedule = Transform.pretalx_schedule_to_europython_schedule(
+        pretalx_schedule.breaks, ep_sessions, ep_speakers
+    )
 
     # Warn about duplicates if the flag is set
     if len(sys.argv) > 1 and sys.argv[1] == "--warn-dupes":
@@ -36,3 +40,6 @@ if __name__ == "__main__":
     print(f"Writing the data to {Config.public_path}...")
     Utils.write_to_file(Config.public_path / "sessions.json", ep_sessions)
     Utils.write_to_file(Config.public_path / "speakers.json", ep_speakers)
+    Utils.write_to_file(
+        Config.public_path / "schedule.json", ep_schedule, direct_dump=True
+    )

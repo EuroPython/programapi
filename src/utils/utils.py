@@ -1,11 +1,14 @@
 import json
+from collections import defaultdict
 from collections.abc import KeysView
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from slugify import slugify
 
-from src.models.europython import EuroPythonSession, EuroPythonSpeaker
-from src.models.pretalx import PretalxSpeaker, PretalxSubmission
+from src.misc import Room
+from src.models.europython import EuroPythonSession, EuroPythonSpeaker, Schedule
+from src.models.pretalx import PretalxScheduleBreak, PretalxSpeaker, PretalxSubmission
 
 
 class Utils:
@@ -111,15 +114,63 @@ class Utils:
         return Utils.replace_duplicate_slugs(object_code_to_slug)
 
     @staticmethod
+    def merge_breaks(
+        breaks: list[PretalxScheduleBreak],
+    ) -> list[tuple[str, int, list[Room], datetime]]:
+        grouped_breaks: dict[
+            tuple[datetime, datetime, str], list[PretalxScheduleBreak]
+        ] = defaultdict(list)
+
+        for b in breaks:
+            key = (b.start, b.end, b.description)
+            grouped_breaks[key].append(b)
+
+        merged_breaks = []
+
+        for (start, end, title), group in grouped_breaks.items():
+            duration = int((end - start).total_seconds() / 60)
+            rooms = [b.room for b in group]
+            merged_break = (title, duration, rooms, start)
+            merged_breaks.append(merged_break)
+
+        return merged_breaks
+
+    @staticmethod
+    def start_times(session: EuroPythonSession) -> list[datetime]:
+        """
+        Some sessions (tutorial, workshop) have multiple slots, therefore multiple start times
+        """
+        if "tutorial" in session.session_type.lower():
+            # Tutorials have 2 slots, 90 minutes each, with a 15-minute break in between
+            return [session.start, session.start + timedelta(minutes=90 + 15)]
+
+        if "workshop" in session.session_type.lower():
+            # Workshops have 4 slots, 90 minutes each, with 15-minute breaks in between, and a 1-hour lunch break after the 2nd slot
+            return [
+                session.start,
+                session.start + timedelta(minutes=90 + 15),
+                session.start + timedelta(minutes=90 + 15 + 90 + 60),
+                session.start + timedelta(minutes=90 + 15 + 90 + 60 + 90 + 15),
+            ]
+
+        else:
+            return [session.start]
+
+    @staticmethod
     def write_to_file(
         output_file: Path | str,
-        data: dict[str, EuroPythonSession] | dict[str, EuroPythonSpeaker],
+        data: dict[str, EuroPythonSession] | dict[str, EuroPythonSpeaker] | Schedule,
+        direct_dump: bool = False,
     ) -> None:
         Path(output_file).parent.absolute().mkdir(parents=True, exist_ok=True)
 
-        with open(output_file, "w") as fd:
-            json.dump(
-                {k: json.loads(v.model_dump_json()) for k, v in data.items()},
-                fd,
-                indent=2,
-            )
+        if not direct_dump:
+            with open(output_file, "w") as fd:
+                json.dump(
+                    {k: json.loads(v.model_dump_json()) for k, v in data.items()},
+                    fd,
+                    indent=2,
+                )
+        else:
+            with open(output_file, "w") as fd:
+                json.dump(json.loads(data.model_dump_json()), fd, indent=2)
