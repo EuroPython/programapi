@@ -1,10 +1,12 @@
 - name: Deploy programapi generator with Nginx and Let's Encrypt SSL certificate
-  hosts: hetzner
+  hosts: all
   become: yes
   gather_facts: yes
 
   vars:
     repository_url: https://github.com/EuroPython/programapi.git
+    app_version: "{{ commit_hash }}"
+    domain_name: programapi24.europython.eu
 
   tasks:
     - name: Install Docker dependencies
@@ -83,6 +85,5 @@
         minute: "*/5"
         job: "cd /srv && docker compose run app make all"
 
-    #- name: Start Docker compose
-    #  shell: "cd /srv && docker compose up -d"
-    #  docker compose up -d --build --force-recreate
+    - name: Start Docker compose
+      shell: "cd /srv && docker compose up -d --build --force-recreate"
