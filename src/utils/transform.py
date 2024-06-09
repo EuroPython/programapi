@@ -119,7 +119,7 @@ class Transform:
         ep_schedule_sessions_split = []
         for session in ep_sessions.values():
             # Skip the sessions that are not assigned in the schedule
-            if not session.start:
+            if not session.start or not session.room:
                 continue
             start_times = Utils.start_times(session)
             original_duration = session.duration
@@ -139,7 +139,7 @@ class Transform:
                     tweet=session.tweet,
                     level=session.level,
                     total_duration=original_duration,
-                    room=session.room,
+                    rooms=[session.room],
                     start=start_time,
                     website_url=session.website_url,
                     slot_count=session.slot_count,

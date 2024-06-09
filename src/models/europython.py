@@ -184,7 +184,7 @@ class EuroPythonScheduleSession(BaseModel):
     tweet: str
     level: str
     total_duration: int = Field(..., exclude=True)
-    room: Room
+    rooms: list[Room]
     start: datetime
     slot_count: int = Field(..., exclude=True)
     website_url: str
@@ -225,11 +225,7 @@ class Schedule(BaseModel):
                 day_dict[event_date] = {"rooms": list(set(event.rooms)), "events": []}
             else:
                 day_dict[event_date]["rooms"] = list(
-                    set(
-                        day_dict[event_date]["rooms"] + [event.room]
-                        if event.event_type is EventType.SESSION
-                        else event.rooms
-                    )
+                    set(day_dict[event_date]["rooms"] + event.rooms)
                 )
             day_dict[event_date]["events"].append(event)
 
