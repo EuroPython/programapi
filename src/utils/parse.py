@@ -2,7 +2,7 @@ import json
 from collections.abc import KeysView
 from pathlib import Path
 
-from src.models.pretalx import PretalxSpeaker, PretalxSubmission
+from src.models.pretalx import PretalxSchedule, PretalxSpeaker, PretalxSubmission
 from src.utils.utils import Utils
 
 
@@ -47,3 +47,17 @@ class Parse:
             }
 
         return publishable_speakers_by_code
+
+    @staticmethod
+    def schedule(input_file: Path | str) -> PretalxSchedule:
+        """
+        Returns the schedule:
+
+        PretalxSchedule.slots: list[PretalxSubmission]
+        PretalxSchedule.breaks: list[PretalxScheduleBreak]
+        """
+        with open(input_file) as fd:
+            js = json.load(fd)
+            schedule = PretalxSchedule.model_validate(js)
+
+        return schedule

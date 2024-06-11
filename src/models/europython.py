@@ -1,9 +1,11 @@
-from datetime import datetime
+from __future__ import annotations
+
+from datetime import date, datetime
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
 from src.config import Config
-from src.misc import SpeakerQuestion, SubmissionQuestion
+from src.misc import EventType, Room, SpeakerQuestion, SubmissionQuestion
 from src.models.pretalx import PretalxAnswer
 
 
@@ -139,6 +141,7 @@ class EuroPythonSession(BaseModel):
     sessions_before: list[str] | None = None
     next_session: str | None = None
     prev_session: str | None = None
+    slot_count: int = Field(..., exclude=True)
 
     @computed_field
     def website_url(self) -> str:
@@ -166,3 +169,66 @@ class EuroPythonSession(BaseModel):
                 values["level"] = answer.answer_text.lower()
 
         return values
+
+
+class EuroPythonScheduleSession(BaseModel):
+    """
+    Model for EuroPython schedule session data
+    """
+
+    event_type: EventType = EventType.SESSION
+    code: str
+    slug: str
+    title: str
+    session_type: str
+    speakers: list[dict[str, str]]  # code, name, website_url
+    tweet: str
+    level: str
+    total_duration: int = Field(..., exclude=True)
+    rooms: list[Room]
+    start: datetime
+    slot_count: int = Field(..., exclude=True)
+    website_url: str
+
+    @computed_field
+    def duration(self) -> int:
+        return self.total_duration // self.slot_count
+
+
+class EuroPythonScheduleBreak(BaseModel):
+    """
+    Model for EuroPython schedule break data
+    """
+
+    event_type: EventType = EventType.BREAK
+    title: str
+    duration: int
+    rooms: list[Room]
+    start: datetime
+
+
+class DaySchedule(BaseModel):
+    rooms: list[Room]
+    events: list[EuroPythonScheduleSession | EuroPythonScheduleBreak]
+
+
+class Schedule(BaseModel):
+    days: dict[date, DaySchedule]
+
+    @classmethod
+    def from_events(
+        cls, events: list[EuroPythonScheduleSession | EuroPythonScheduleBreak]
+    ) -> Schedule:
+        day_dict = {}
+        for event in events:
+            event_date = event.start.date()
+            if event_date not in day_dict:
+                day_dict[event_date] = {"rooms": list(set(event.rooms)), "events": []}
+            else:
+                day_dict[event_date]["rooms"] = list(
+                    set(day_dict[event_date]["rooms"] + event.rooms)
+                )
+            day_dict[event_date]["events"].append(event)
+
+        day_schedule_dict = {k: DaySchedule(**v) for k, v in day_dict.items()}
+        return cls(days=day_schedule_dict)
