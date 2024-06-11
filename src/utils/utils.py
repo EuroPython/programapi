@@ -139,13 +139,19 @@ class Utils:
     def start_times(session: EuroPythonSession) -> list[datetime]:
         """
         Some sessions (tutorial, workshop) have multiple slots, therefore multiple start times
+
+        TODO: We assume a lot of things here, IMHO we should make things more flexible :)
         """
-        if "tutorial" in session.session_type.lower():
-            # Tutorials have 2 slots, 90 minutes each, with a 15-minute break in between
+        session_type = session.session_type.lower()
+        is_tutorial = "tutorial" in session_type
+        is_workshop = "workshop" in session_type
+
+        if (is_tutorial or is_workshop) and session.slot_count == 2:
+            # Half day workshops and tutorials have 2 slots, 90 minutes each, with a 15-minute break in between
             return [session.start, session.start + timedelta(minutes=90 + 15)]
 
-        if "workshop" in session.session_type.lower():
-            # Workshops have 4 slots, 90 minutes each, with 15-minute breaks in between, and a 1-hour lunch break after the 2nd slot
+        elif is_workshop and session.slot_count == 4:
+            # Full day workshops have 4 slots, 90 minutes each, with 15-minute breaks in between, and a 1-hour lunch break after the 2nd slot
             return [
                 session.start,
                 session.start + timedelta(minutes=90 + 15),
@@ -153,8 +159,7 @@ class Utils:
                 session.start + timedelta(minutes=90 + 15 + 90 + 60 + 90 + 15),
             ]
 
-        else:
-            return [session.start]
+        return [session.start]
 
     @staticmethod
     def write_to_file(
