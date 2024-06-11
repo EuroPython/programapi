@@ -46,9 +46,7 @@ class Room(Enum):
     north_hall = "North Hall"
     south_hall_2a = "South Hall 2A"
     south_hall_2b = "South Hall 2B"
-    main_hall_a = "Main Hall A"
-    main_hall_b = "Main Hall B"
-    main_hall_c = "Main Hall C"
+    exhibit_hall = "Exhibit Hall"
 
 
 class EventType(Enum):
