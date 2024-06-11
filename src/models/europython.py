@@ -178,6 +178,7 @@ class EuroPythonScheduleSession(BaseModel):
 
     event_type: EventType = EventType.SESSION
     code: str
+    slug: str
     title: str
     session_type: str
     speakers: list[dict[str, str]]  # code, name, website_url

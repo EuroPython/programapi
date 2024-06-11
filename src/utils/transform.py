@@ -101,6 +101,7 @@ class Transform:
 
         speakers_values = ep_speakers.values()
         speaker_code_to_name = {s.code: s.name for s in speakers_values}
+        speaker_code_to_slug = {s.code: s.slug for s in speakers_values}
         speaker_code_to_website_url = {s.code: s.website_url for s in speakers_values}
 
         # Merge breaks with the same start and end times
@@ -122,23 +123,24 @@ class Transform:
             if not session.start or not session.room:
                 continue
             start_times = Utils.start_times(session)
-            original_duration = session.duration
             for start_time in start_times:
                 ep_schedule_session = EuroPythonScheduleSession(
                     code=session.code,
+                    slug=session.slug,
                     title=session.title,
                     session_type=session.session_type,
                     speakers=[
                         {
                             "code": speaker_code,
                             "name": speaker_code_to_name[speaker_code],
+                            "slug": speaker_code_to_slug[speaker_code],
                             "website_url": speaker_code_to_website_url[speaker_code],
                         }
                         for speaker_code in session.speakers
                     ],
                     tweet=session.tweet,
                     level=session.level,
-                    total_duration=original_duration,
+                    total_duration=int(session.duration),
                     rooms=[session.room],
                     start=start_time,
                     website_url=session.website_url,
