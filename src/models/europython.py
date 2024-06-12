@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from src.config import Config
 from src.misc import EventType, Room, SpeakerQuestion, SubmissionQuestion
@@ -142,6 +142,13 @@ class EuroPythonSession(BaseModel):
     next_session: str | None = None
     prev_session: str | None = None
     slot_count: int = Field(..., exclude=True)
+
+    @field_validator("room", mode="before")
+    @classmethod
+    def handle_poster_room(cls, value) -> str | None:
+        if value and "Main Hall" in value:
+            return "Exhibit Hall"
+        return value
 
     @computed_field
     def website_url(self) -> str:
