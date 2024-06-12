@@ -237,5 +237,11 @@ class Schedule(BaseModel):
                 )
             day_dict[event_date]["events"].append(event)
 
+        # Registration session should cover all rooms
+        for day in day_dict.values():
+            for event in day["events"]:
+                if "Registration & Welcome" in event.title:
+                    event.rooms = list(set(day["rooms"]))
+
         day_schedule_dict = {k: DaySchedule(**v) for k, v in day_dict.items()}
         return cls(days=day_schedule_dict)
