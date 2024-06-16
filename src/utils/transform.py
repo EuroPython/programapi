@@ -135,6 +135,7 @@ class Transform:
                         )
                         for speaker_code in session.speakers
                     ],
+                    track=session.track,
                     tweet=session.tweet,
                     level=session.level,
                     total_duration=int(session.duration),
