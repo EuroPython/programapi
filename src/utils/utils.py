@@ -9,6 +9,7 @@ from slugify import slugify
 from src.misc import Room
 from src.models.europython import EuroPythonSession, EuroPythonSpeaker, Schedule
 from src.models.pretalx import PretalxScheduleBreak, PretalxSpeaker, PretalxSubmission
+from src.utils.sort import Sort
 
 
 class Utils:
@@ -172,10 +173,14 @@ class Utils:
         if not direct_dump:
             with open(output_file, "w") as fd:
                 json.dump(
-                    {k: json.loads(v.model_dump_json()) for k, v in data.items()},
+                    Sort.sort_nested(
+                        {k: json.loads(v.model_dump_json()) for k, v in data.items()}
+                    ),
                     fd,
                     indent=2,
                 )
         else:
             with open(output_file, "w") as fd:
-                json.dump(json.loads(data.model_dump_json()), fd, indent=2)
+                json.dump(
+                    Sort.sort_nested(json.loads(data.model_dump_json())), fd, indent=2
+                )
