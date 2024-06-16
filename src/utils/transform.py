@@ -1,6 +1,7 @@
 from src.models.europython import (
     EuroPythonScheduleBreak,
     EuroPythonScheduleSession,
+    EuroPythonScheduleSpeaker,
     EuroPythonSession,
     EuroPythonSpeaker,
     Schedule,
@@ -99,11 +100,6 @@ class Transform:
         Transforms the given Pretalx schedule to EuroPython schedule
         """
 
-        speakers_values = ep_speakers.values()
-        speaker_code_to_name = {s.code: s.name for s in speakers_values}
-        speaker_code_to_slug = {s.code: s.slug for s in speakers_values}
-        speaker_code_to_website_url = {s.code: s.website_url for s in speakers_values}
-
         # Merge breaks with the same start and end times
         breaks = Utils.merge_breaks(breaks)
         ep_breaks = []
@@ -130,12 +126,13 @@ class Transform:
                     title=session.title,
                     session_type=session.session_type,
                     speakers=[
-                        {
-                            "code": speaker_code,
-                            "name": speaker_code_to_name[speaker_code],
-                            "slug": speaker_code_to_slug[speaker_code],
-                            "website_url": speaker_code_to_website_url[speaker_code],
-                        }
+                        EuroPythonScheduleSpeaker(
+                            code=speaker_code,
+                            name=ep_speakers[speaker_code].name,
+                            avatar=ep_speakers[speaker_code].avatar,
+                            slug=ep_speakers[speaker_code].slug,
+                            website_url=ep_speakers[speaker_code].website_url,
+                        )
                         for speaker_code in session.speakers
                     ],
                     tweet=session.tweet,
