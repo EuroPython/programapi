@@ -200,7 +200,7 @@ class EuroPythonScheduleSession(BaseModel):
     title: str
     session_type: str
     speakers: list[EuroPythonScheduleSpeaker]
-    track: str
+    track: str | None
     tweet: str
     level: str
     total_duration: int = Field(..., exclude=True)
