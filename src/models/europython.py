@@ -178,6 +178,18 @@ class EuroPythonSession(BaseModel):
         return values
 
 
+class EuroPythonScheduleSpeaker(BaseModel):
+    """
+    Model for EuroPython schedule speaker data
+    """
+
+    code: str
+    name: str
+    avatar: str
+    slug: str
+    website_url: str
+
+
 class EuroPythonScheduleSession(BaseModel):
     """
     Model for EuroPython schedule session data
@@ -188,7 +200,8 @@ class EuroPythonScheduleSession(BaseModel):
     slug: str
     title: str
     session_type: str
-    speakers: list[dict[str, str]]  # code, name, website_url
+    speakers: list[EuroPythonScheduleSpeaker]
+    track: str | None
     tweet: str
     level: str
     total_duration: int = Field(..., exclude=True)
