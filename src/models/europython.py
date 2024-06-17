@@ -186,6 +186,7 @@ class EuroPythonScheduleSpeaker(BaseModel):
     code: str
     name: str
     avatar: str
+    slug: str
     website_url: str
 
 
