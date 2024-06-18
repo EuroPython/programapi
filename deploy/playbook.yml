@@ -85,8 +85,11 @@
         minute: "*/5"
         job: "cd /srv && docker compose run app make all"
 
-    - name: Do a system prune to avoid running out of disk space
-      shell: "docker system prune -f"
+    - name: Periodically do a system prune
+      ansible.builtin.cron:
+        name: Docker system prune
+        minute: "*/5"
+        job: "docker system prune -f"
 
     - name: Start Docker compose
       shell: "cd /srv && docker compose up -d --build --force-recreate"
