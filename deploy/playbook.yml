@@ -83,7 +83,7 @@
       ansible.builtin.cron:
         name: Sync pretalx data
         minute: "*/5"
-        job: "cd /srv && docker compose run app make all"
+        job: "cd /srv && docker compose run --rm app make all"
 
     - name: Do a system prune to avoid running out of disk space
       shell: "docker system prune -f"
