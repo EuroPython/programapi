@@ -4,9 +4,9 @@
 #
 #    pip-compile
 #
-ansible==10.0.1
+ansible==10.1.0
     # via -r deploy/requirements.in
-ansible-core==2.17.0
+ansible-core==2.17.1
     # via ansible
 cffi==1.16.0
     # via cryptography
