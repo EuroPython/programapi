@@ -23,6 +23,7 @@ def test_extract_mastodon_url(input_string: str, result: str) -> None:
     ("input_string", "result"),
     [
         ("username", "https://linkedin.com/in/username"),
+        ("linkedin.com/in/username", "https://linkedin.com/in/username"),
         ("in/username", "https://linkedin.com/in/username"),
         ("www.linkedin.com/in/username", "https://www.linkedin.com/in/username"),
         ("http://linkedin.com/in/username", "https://linkedin.com/in/username"),

@@ -105,7 +105,7 @@ class EuroPythonSpeaker(BaseModel):
         """
         if text.startswith("in/"):
             linkedin_url = f"https://linkedin.com/{text}"
-        elif not text.startswith(("https://", "http://", "www.")):
+        elif not text.startswith(("https://", "http://", "www.", "linkedin.")):
             linkedin_url = f"https://linkedin.com/in/{text}"
         else:
             linkedin_url = (
