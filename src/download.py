@@ -17,7 +17,7 @@ schedule_url = base_url + "schedules/latest/"
 resources = [
     # Questions need to be passed to include answers in the same endpoint,
     # saving us later time with joining the answers.
-    "submissions?questions=all",
+    "submissions?questions=all&state=confirmed",
     "speakers?questions=all",
 ]
 
