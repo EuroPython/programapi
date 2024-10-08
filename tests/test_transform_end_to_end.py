@@ -8,12 +8,15 @@ pretalx_submissions = Parse.publishable_submissions(
     "./data/examples/pretalx/submissions.json"
 )
 
+youtube_data = Parse.youtube("./data/examples/pretalx/youtube.json")
+
 
 def test_e2e_sessions() -> None:
     TimingRelationships.compute(pretalx_submissions.values())
 
     ep_sessions = Transform.pretalx_submissions_to_europython_sessions(
-        pretalx_submissions
+        pretalx_submissions,
+        youtube_data,
     )
     ep_sessions_dump = {
         k: json.loads(v.model_dump_json()) for k, v in ep_sessions.items()
