@@ -19,6 +19,7 @@ resources = [
     # saving us later time with joining the answers.
     "submissions?questions=all&state=confirmed",
     "speakers?questions=all",
+    "p/youtube",
 ]
 
 Config.raw_path.mkdir(parents=True, exist_ok=True)
@@ -45,7 +46,8 @@ for resource in resources:
 
     pbar.close()
 
-    filename = resource.split("?")[0]  # To get rid of "?questions"
+    # To get the resource name without extra parameters
+    filename = resource.split("?")[0].split("/")[-1]
     filename = f"{filename}_latest.json"
     filepath = Config.raw_path / filename
 
