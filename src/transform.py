@@ -16,12 +16,16 @@ if __name__ == "__main__":
     )
     pretalx_schedule = Parse.schedule(Config.raw_path / "schedule_latest.json")
 
+    # Parse the YouTube data
+    youtube_data = Parse.youtube(Config.raw_path / "youtube_latest.json")
+
     print("Computing timing relationships...")
     TimingRelationships.compute(pretalx_submissions.values())
 
     print("Transforming the data...")
     ep_sessions = Transform.pretalx_submissions_to_europython_sessions(
-        pretalx_submissions
+        pretalx_submissions,
+        youtube_data,
     )
     ep_speakers = Transform.pretalx_speakers_to_europython_speakers(pretalx_speakers)
     ep_schedule = Transform.pretalx_schedule_to_europython_schedule(

@@ -61,3 +61,14 @@ class Parse:
             schedule = PretalxSchedule.model_validate(js)
 
         return schedule
+
+    @staticmethod
+    def youtube(input_file: Path | str) -> dict[str, str]:
+        """
+        Returns the Session code to YouTube URL mapping
+        """
+        with open(input_file) as fd:
+            js = json.load(fd)
+            youtube_data = {s["submission"]: s["youtube_link"] for s in js}
+
+        return youtube_data

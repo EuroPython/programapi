@@ -15,6 +15,7 @@ class Transform:
     @staticmethod
     def pretalx_submissions_to_europython_sessions(
         submissions: dict[str, PretalxSubmission],
+        youtube_data: dict[str, str],
     ) -> dict[str, EuroPythonSession]:
         """
         Transforms the given Pretalx submissions to EuroPython sessions
@@ -58,6 +59,7 @@ class Transform:
                 next_session=TimingRelationships.get_next_session(submission.code),
                 prev_session=TimingRelationships.get_prev_session(submission.code),
                 slot_count=submission.slot_count,
+                youtube_url=youtube_data.get(submission.code),
             )
             ep_sessions[code] = ep_session
 
