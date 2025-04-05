@@ -1,2 +1,28 @@
-[tool.isort]
-profile = "black"
+[project]
+name = "programapi"
+version = "2025.4.5"
+description = "Programme API for EuroPython"
+readme = "README.md"
+requires-python = ">=3.12"
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+  "pydantic>=2.11.2",
+  "python-dotenv>=1.1",
+  "python-slugify>=8.0.4",
+  "requests>=2.32.3",
+  "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4.2",
+  "pytest>=8.3.5",
+  "ruff>=0.11.4",
+]
+
+[tool.ruff]
+lint.select = [ "I" ]
