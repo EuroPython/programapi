@@ -28,12 +28,12 @@ jobs:
         run: make deps/install
 
       - name: Download data
-        run: uv run make download > /dev/null
+        run: uv run make download > /dev/null 2>&1
         env:
             PRETALX_TOKEN: ${{ secrets.PRETALX_TOKEN }}
 
       - name: Transform data
-        run: uv run make transform > /dev/null
+        run: uv run make transform > /dev/null 2>&1
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
@@ -44,4 +44,4 @@ jobs:
         run: ssh-keyscan "static.europython.eu" > ~/.ssh/known_hosts
 
       - name: Deploy
-        run: uv run make deploy FORCE_DEPLOY=true > /dev/null
+        run: uv run make deploy FORCE_DEPLOY=true
