@@ -1,6 +1,10 @@
-name: Tests
+name: Deploy to static server
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches:
+      - ep2024
+  workflow_dispatch:
 
 jobs:
   tests:
