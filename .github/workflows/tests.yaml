@@ -15,11 +15,13 @@ jobs:
       - name: Set up Python 3
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
-          cache: "pip"
+          python-version: '3.13'
 
-      - name: Install dependencies
-        run: make deps/pre install
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies from uv.lock
+        run: make deps/install
 
       - name: Run pytest
         run: make test

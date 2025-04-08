@@ -1,12 +1,11 @@
+dev:
+	uv sync --dev
 
-deps/pre:
-	pip install pip-tools
-
-deps/compile:
-	pip-compile
+deps/upgrade:
+	uv lock --upgrade
 
 deps/install:
-	pip-sync
+	uv sync
 
 install: deps/install
 
@@ -23,11 +22,10 @@ endif
 all: download transform
 
 test:
-	PYTHONPATH="src" pytest
+	uv run pytest
 
 pre-commit:
 	pre-commit install
-	pre-commit run --all-files
 
 clean:
 	git clean -xdf
