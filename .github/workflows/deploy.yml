@@ -9,8 +9,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  tests:
-    name: Run tests
+  deploy:
+    name: Download, transform, and deploy
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
