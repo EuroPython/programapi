@@ -7,6 +7,7 @@ class SpeakerQuestion:
     twitter = "Social (X/Twitter)"
     mastodon = "Social (Mastodon)"
     linkedin = "Social (LinkedIn)"
+    bluesky = "Social (Bluesky)"
     gitx = "Social (Github/Gitlab)"
 
 
