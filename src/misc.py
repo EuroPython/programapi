@@ -5,8 +5,9 @@ class SpeakerQuestion:
     affiliation = "Company/Organization/Educational Institution"
     homepage = "Social (Homepage)"
     twitter = "Social (X/Twitter)"
-    mastodon = "Social (Mastodon)"
+    bluesky = "Social (Bluesky)"
     linkedin = "Social (LinkedIn)"
+    mastodon = "Social (Mastodon)"
     gitx = "Social (GitHub/GitLab)"
 
 
