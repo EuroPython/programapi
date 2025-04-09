@@ -33,6 +33,7 @@ def test_extract_mastodon_url(input_string: str, result: str) -> None:
 def test_extract_linkedin_url(input_string: str, result: str) -> None:
     assert EuroPythonSpeaker.extract_linkedin_url(input_string) == result
 
+
 @pytest.mark.parametrize(
     ("input_string", "result"),
     [
@@ -41,11 +42,26 @@ def test_extract_linkedin_url(input_string: str, result: str) -> None:
         ("username.bsky.social", "https://bsky.app/profile/username.bsky.social"),
         ("bsky.app/profile/username", "https://bsky.app/profile/username.bsky.social"),
         ("bsky/username", "https://bsky.app/profile/username.bsky.social"),
-        ("www.bsky.app/profile/username", "https://bsky.app/profile/username.bsky.social"),
-        ("www.bsky.app/profile/username.bsky.social", "https://bsky.app/profile/username.bsky.social"),
-        ("http://bsky.app/profile/username", "https://bsky.app/profile/username.bsky.social"),
-        ("https://bsky.app/profile/username.com", "https://bsky.app/profile/username.com"),
-        ("https://bsky.app/profile/username.bsky.social", "https://bsky.app/profile/username.bsky.social"),
+        (
+            "www.bsky.app/profile/username",
+            "https://bsky.app/profile/username.bsky.social",
+        ),
+        (
+            "www.bsky.app/profile/username.bsky.social",
+            "https://bsky.app/profile/username.bsky.social",
+        ),
+        (
+            "http://bsky.app/profile/username",
+            "https://bsky.app/profile/username.bsky.social",
+        ),
+        (
+            "https://bsky.app/profile/username.com",
+            "https://bsky.app/profile/username.com",
+        ),
+        (
+            "https://bsky.app/profile/username.bsky.social",
+            "https://bsky.app/profile/username.bsky.social",
+        ),
     ],
 )
 def test_extract_bluesky_url(input_string: str, result: str) -> None:

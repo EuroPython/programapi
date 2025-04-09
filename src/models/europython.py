@@ -123,8 +123,8 @@ class EuroPythonSpeaker(BaseModel):
     @staticmethod
     def extract_bluesky_url(text: str) -> str:
         """
-      Returns a normalized BlueSky URL in the form https://bsky.app/profile/<USERNAME>.bsky.social,
-      or uses the entire domain if it's custom (e.g., .dev).
+        Returns a normalized BlueSky URL in the form https://bsky.app/profile/<USERNAME>.bsky.social,
+        or uses the entire domain if it's custom (e.g., .dev).
         """
         text = text.split("?", 1)[0].strip()
 
@@ -145,7 +145,7 @@ class EuroPythonSpeaker(BaseModel):
             text = text.rsplit("/", 1)[-1]
 
         # if there's no dot, assume it's a non-custom handle and append '.bsky.social'
-        if '.' not in text:
+        if "." not in text:
             text += ".bsky.social"
 
         return f"https://bsky.app/profile/{text}"
