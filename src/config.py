@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 
 
 class Config:
-    event = "europython-2024"
-    event_dir_name = "ep2024"
+    event = "europython-2025"
+    event_dir_name = "ep2025"
     project_root = Path(__file__).resolve().parents[1]
     raw_path = Path(f"{project_root}/data/raw/{event_dir_name}")
     public_path = Path(f"{project_root}/data/public/{event_dir_name}")

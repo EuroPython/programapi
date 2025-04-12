@@ -1,10 +1,22 @@
 import json
+from argparse import ArgumentParser
 from typing import Any
 
 import requests
 from tqdm import tqdm
 
 from src.config import Config
+
+parser = ArgumentParser(description="Download Pretalx data for EuroPython processing.")
+parser.add_argument(
+    "-e",
+    "--exclude",
+    choices=["schedule", "youtube"],
+    action="append",
+    help="Exclude certain resources from download.",
+)
+args = parser.parse_args()
+exclude = set(args.exclude or [])
 
 headers = {
     "Accept": "application/json, text/javascript",
@@ -14,24 +26,27 @@ headers = {
 base_url = f"https://pretalx.com/api/events/{Config.event}/"
 schedule_url = base_url + "schedules/latest/"
 
+# Build resource list dynamically based on exclusions
 resources = [
-    # Questions need to be passed to include answers in the same endpoint,
-    # saving us later time with joining the answers.
     "submissions?questions=all&state=confirmed",
     "speakers?questions=all",
-    "p/youtube",
 ]
+
+if "youtube" not in exclude:
+    resources.append("p/youtube")
 
 Config.raw_path.mkdir(parents=True, exist_ok=True)
 
 for resource in resources:
-    url = base_url + f"{resource}"
+    # To get the resource name without extra parameters
+    resource_name = resource.split("?")[0].split("/")[-1]
+    url = base_url + resource
 
     res0: list[dict[str, Any]] = []
     data: dict[str, Any] = {"next": url}
     n = 0
 
-    pbar = tqdm(desc=f"Downloading {resource}", unit=" page", dynamic_ncols=True)
+    pbar = tqdm(desc=f"Downloading {resource_name}", unit=" page", dynamic_ncols=True)
 
     while url := data["next"]:
         n += 1
@@ -46,24 +61,25 @@ for resource in resources:
 
     pbar.close()
 
-    # To get the resource name without extra parameters
-    filename = resource.split("?")[0].split("/")[-1]
-    filename = f"{filename}_latest.json"
+    # Save the data to a file 
+    filename = f"{resource_name}_latest.json"
     filepath = Config.raw_path / filename
 
     with open(filepath, "w") as fd:
         json.dump(res0, fd)
 
+# Download schedule unless excluded
+if "schedule" not in exclude:
+    print("Downloading schedule...", end="")
+    response = requests.get(schedule_url, headers=headers)
 
-# Download schedule
-response = requests.get(schedule_url, headers=headers)
+    if response.status_code != 200:
+        raise Exception(f"Error {response.status_code}: {response.text}")
 
-if response.status_code != 200:
-    raise Exception(f"Error {response.status_code}: {response.text}")
+    data = response.json()
+    filename = "schedule_latest.json"
+    filepath = Config.raw_path / filename
 
-data = response.json()
-filename = "schedule_latest.json"
-filepath = Config.raw_path / filename
-
-with open(filepath, "w") as fd:
-    json.dump(data, fd)
+    with open(filepath, "w") as fd:
+        json.dump(data, fd)
+    print(" done.")

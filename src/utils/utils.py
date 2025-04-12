@@ -75,7 +75,8 @@ class Utils:
         Warns about duplicate attributes in the given objects
         """
         print(
-            f"Checking for duplicate {'s, '.join(session_attributes_to_check)}s in sessions..."
+            f"\nChecking for duplicate {'s, '.join(session_attributes_to_check)}s in sessions...",
+            end="",
         )
         duplicate_sessions = Utils.find_duplicate_attributes(
             sessions_to_check, session_attributes_to_check
@@ -84,9 +85,11 @@ class Utils:
         for attribute, codes in duplicate_sessions.items():
             if len(codes) > 1:
                 print(f"Duplicate ``{attribute}`` in sessions: {codes}")
+        print(" done.")
 
         print(
-            f"Checking for duplicate {'s, '.join(speaker_attributes_to_check)}s in speakers..."
+            f"Checking for duplicate {'s, '.join(speaker_attributes_to_check)}s in speakers...",
+            end="",
         )
         duplicate_speakers = Utils.find_duplicate_attributes(
             speakers_to_check, speaker_attributes_to_check
@@ -95,6 +98,7 @@ class Utils:
         for attribute, codes in duplicate_speakers.items():
             if len(codes) > 1:
                 print(f"Duplicate ``{attribute}`` in speakers: {codes}")
+        print(" done.")
 
     @staticmethod
     def compute_unique_slugs_by_attribute(

@@ -1,19 +1,27 @@
 # Variables for the project
 # =========================
-CONFERENCE ?= ep2024
+CONFERENCE ?= ep2025
 DATA_DIR ?= ./data/public/$(CONFERENCE)/
 
 # Variables for remote host
 # =========================
 VPS_USER  ?= static_content_user
 VPS_HOST  ?= static.europython.eu
-VPS_PATH  ?= /home/$(VPS_USER)/content/programapi/$(CONFERENCE)/releases
+VPS_PATH  ?= /home/$(VPS_USER)/content/static/programme/$(CONFERENCE)/releases
 REMOTE_CMD=ssh $(VPS_USER)@$(VPS_HOST)
 
 # Variables for deploy
-# ==========================
+# ====================
 TIMESTAMP ?= $(shell date +%Y%m%d%H%M%S)
 FORCE_DEPLOY ?= false
+
+# Optional arguments
+# ==================
+EXCLUDE ?=
+WARN_DUPES ?= false
+
+# Convert EXCLUDE space-separated list to repeated --exclude flags
+EXCLUDE_FLAGS = $(foreach item,$(EXCLUDE),--exclude $(item))
 
 dev:
 	uv sync --dev
@@ -27,13 +35,13 @@ deps/install:
 install: deps/install
 
 download:
-	python -m src.download
+	python -m src.download $(EXCLUDE_FLAGS)
 
 transform:
 ifeq ($(WARN_DUPES), true)
-	python -m src.transform --warn-dupes
+	python -m src.transform $(EXCLUDE_FLAGS) --warn-dupes
 else
-	python -m src.transform
+	python -m src.transform $(EXCLUDE_FLAGS)
 endif
 
 all: download transform
