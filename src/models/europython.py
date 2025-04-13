@@ -28,6 +28,7 @@ class EuroPythonSpeaker(BaseModel):
     twitter_url: str | None = None
     mastodon_url: str | None = None
     linkedin_url: str | None = None
+    bluesky_url: str | None = None
     gitx: str | None = None
 
     @computed_field
@@ -55,6 +56,11 @@ class EuroPythonSpeaker(BaseModel):
 
             if answer.question_text == SpeakerQuestion.mastodon:
                 values["mastodon_url"] = cls.extract_mastodon_url(
+                    answer.answer_text.strip().split()[0]
+                )
+
+            if answer.question_text == SpeakerQuestion.bluesky:
+                values["bluesky_url"] = cls.extract_bluesky_url(
                     answer.answer_text.strip().split()[0]
                 )
 
@@ -113,6 +119,36 @@ class EuroPythonSpeaker(BaseModel):
             )
 
         return linkedin_url.split("?")[0]
+
+    @staticmethod
+    def extract_bluesky_url(text: str) -> str:
+        """
+        Returns a normalized BlueSky URL in the form https://bsky.app/profile/<USERNAME>.bsky.social,
+        or uses the entire domain if it's custom (e.g., .dev).
+        """
+        text = text.split("?", 1)[0].strip()
+
+        if text.startswith("https://"):
+            text = text[8:]
+        elif text.startswith("http://"):
+            text = text[7:]
+
+        if text.startswith("www."):
+            text = text[4:]
+
+        for marker in ("bsky.app/profile/", "bsky/"):
+            if marker in text:
+                text = text.split(marker, 1)[1]
+                break
+        # case custom domain
+        else:
+            text = text.rsplit("/", 1)[-1]
+
+        # if there's no dot, assume it's a non-custom handle and append '.bsky.social'
+        if "." not in text:
+            text += ".bsky.social"
+
+        return f"https://bsky.app/profile/{text}"
 
 
 class EuroPythonSession(BaseModel):
