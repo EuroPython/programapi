@@ -13,6 +13,7 @@ from src.models.europython import EuroPythonSpeaker
             "https://mastodon.social/@username",
         ),
         ("@username@mastodon.social", "https://mastodon.social/@username"),
+        ("username@mastodon.social", "https://mastodon.social/@username"),
     ],
 )
 def test_extract_mastodon_url(input_string: str, result: str) -> None:
@@ -38,7 +39,9 @@ def test_extract_linkedin_url(input_string: str, result: str) -> None:
     ("input_string", "result"),
     [
         ("username", "https://bsky.app/profile/username.bsky.social"),
+        ("@username", "https://bsky.app/profile/username.bsky.social"),
         ("username.dev", "https://bsky.app/profile/username.dev"),
+        ("@username.dev", "https://bsky.app/profile/username.dev"),
         ("username.bsky.social", "https://bsky.app/profile/username.bsky.social"),
         ("bsky.app/profile/username", "https://bsky.app/profile/username.bsky.social"),
         ("bsky/username", "https://bsky.app/profile/username.bsky.social"),
