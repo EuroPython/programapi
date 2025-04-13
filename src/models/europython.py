@@ -93,16 +93,26 @@ class EuroPythonSpeaker(BaseModel):
     @staticmethod
     def extract_mastodon_url(text: str) -> str:
         """
-        Extract the Mastodon URL from the answer, handle @username@instance format
+        Normalize Mastodon handle or URL to the format: https://<instance>/@<username>
         """
-        if not text.startswith(("https://", "http://")) and text.count("@") == 2:
-            mastodon_url = f"https://{text.split('@')[2]}/@{text.split('@')[1]}"
-        else:
-            mastodon_url = (
-                f"https://{text.removeprefix('https://').removeprefix('http://')}"
-            )
+        text = text.strip().split("?", 1)[0]
 
-        return mastodon_url.split("?")[0]
+        # Handle @username@instance or username@instance formats
+        if "@" in text and not text.startswith("http"):
+            parts = text.split("@")
+            if len(parts) == 3:  # @username@instance
+                _, username, instance = parts
+            elif len(parts) == 2:  # username@instance
+                username, instance = parts
+            else:
+                raise ValueError("Invalid Mastodon handle format")
+            return f"https://{instance}/@{username}"
+
+        # Handle full URLs
+        if text.startswith("http://"):
+            text = "https://" + text[len("http://") :]
+
+        return text
 
     @staticmethod
     def extract_linkedin_url(text: str) -> str:
@@ -126,7 +136,7 @@ class EuroPythonSpeaker(BaseModel):
         Returns a normalized BlueSky URL in the form https://bsky.app/profile/<USERNAME>.bsky.social,
         or uses the entire domain if it's custom (e.g., .dev).
         """
-        text = text.split("?", 1)[0].strip()
+        text = text.strip().split("?", 1)[0]
 
         if text.startswith("https://"):
             text = text[8:]

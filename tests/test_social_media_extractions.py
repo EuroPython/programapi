@@ -13,6 +13,7 @@ from src.models.europython import EuroPythonSpeaker
             "https://mastodon.social/@username",
         ),
         ("@username@mastodon.social", "https://mastodon.social/@username"),
+        ("username@mastodon.social", "https://mastodon.social/@username"),
     ],
 )
 def test_extract_mastodon_url(input_string: str, result: str) -> None:
