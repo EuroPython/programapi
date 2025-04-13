@@ -7,7 +7,9 @@ from src.utils.transform import Transform
 from src.utils.utils import Utils
 
 if __name__ == "__main__":
-    parser = ArgumentParser(description="Transform data from Pretalx to EuroPython format and save it.")
+    parser = ArgumentParser(
+        description="Transform data from Pretalx to EuroPython format and save it."
+    )
     parser.add_argument(
         "-w",
         "--warn-dupes",
@@ -24,8 +26,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     exclude = set(args.exclude or [])
 
-
-    print(f"Parsing submissions from {Config.raw_path}/submissions_latest.json...", end="")
+    print(
+        f"Parsing submissions from {Config.raw_path}/submissions_latest.json...", end=""
+    )
     pretalx_submissions = Parse.publishable_submissions(
         Config.raw_path / "submissions_latest.json"
     )
@@ -38,7 +41,10 @@ if __name__ == "__main__":
     print(" done.")
 
     if "youtube" not in exclude:
-        print(f"Parsing YouTube data from {Config.raw_path}/youtube_latest.json...", end="")
+        print(
+            f"Parsing YouTube data from {Config.raw_path}/youtube_latest.json...",
+            end="",
+        )
         youtube_data = Parse.youtube(Config.raw_path / "youtube_latest.json")
         print(" done.")
     else:
@@ -77,7 +83,9 @@ if __name__ == "__main__":
     print(" done.")
 
     if "schedule" not in exclude:
-        print("\nParsing schedule from {Config.raw_path}/schedule_latest.json...", end="")
+        print(
+            "\nParsing schedule from {Config.raw_path}/schedule_latest.json...", end=""
+        )
         pretalx_schedule = Parse.schedule(Config.raw_path / "schedule_latest.json")
         print(" done.")
 

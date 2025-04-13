@@ -61,7 +61,7 @@ for resource in resources:
 
     pbar.close()
 
-    # Save the data to a file 
+    # Save the data to a file
     filename = f"{resource_name}_latest.json"
     filepath = Config.raw_path / filename
 
