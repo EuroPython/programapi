@@ -91,7 +91,7 @@ class EuroPythonSpeaker(BaseModel):
         return twitter_url.split("?")[0]
 
     @staticmethod
-    def extract_mastodon_url(text: str) -> str:
+    def extract_mastodon_url(text: str) -> None | str:
         """
         Normalize Mastodon handle or URL to the format: https://<instance>/@<username>
         """
@@ -105,7 +105,7 @@ class EuroPythonSpeaker(BaseModel):
             elif len(parts) == 2:  # username@instance
                 username, instance = parts
             else:
-                raise ValueError("Invalid Mastodon handle format")
+                return None
             return f"https://{instance}/@{username}"
 
         # Handle full URLs
