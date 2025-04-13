@@ -136,6 +136,10 @@ class EuroPythonSpeaker(BaseModel):
         if text.startswith("www."):
             text = text[4:]
 
+        # Remove @ if present
+        if text.startswith("@"):
+            text = text[1:]
+
         for marker in ("bsky.app/profile/", "bsky/"):
             if marker in text:
                 text = text.split(marker, 1)[1]
