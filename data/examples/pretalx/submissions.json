@@ -63,7 +63,7 @@
                 "question": {
                     "id": 3412,
                     "question": {
-                        "en": "Abstract as a tweet / toot"
+                        "en": "Abstract as a short post (150 character max)"
                     }
                 },
                     "answer": "This is a short version of this talk, as a tweet.",
@@ -97,10 +97,10 @@
                 "question": {
                     "id": 3420,
                     "question": {
-                        "en": "My presentation can be delivered"
+                        "en": "My presentation can be delivered in-person"
                     }
                 },
-                "answer": "in-person at the conference venue",
+                "answer": "Yes",
                 "answer_file": null,
                 "submission": "A8CD3F",
                 "review": null,
@@ -109,7 +109,7 @@
                     {
                         "id": 4500,
                         "answer": {
-                            "en": "in-person at the conference venue"
+                            "en": "Yes"
                         }
                     }
                 ]
@@ -170,7 +170,7 @@
                 "question": {
                     "id": 3412,
                     "question": {
-                        "en": "Abstract as a tweet / toot"
+                        "en": "Abstract as a short post (150 character max)"
                     }
                 },
                     "answer": "Hey, short tweet",
@@ -204,10 +204,10 @@
                 "question": {
                     "id": 3420,
                     "question": {
-                        "en": "My presentation can be delivered"
+                        "en": "My presentation can be delivered in-person"
                     }
                 },
-                "answer": "in-person at the conference venue",
+                "answer": "No",
                 "answer_file": null,
                 "submission": "B8CD4F",
                 "review": null,
@@ -216,7 +216,7 @@
                     {
                         "id": 4500,
                         "answer": {
-                            "en": "in-person at the conference venue"
+                            "en": "No"
                         }
                     }
                 ]

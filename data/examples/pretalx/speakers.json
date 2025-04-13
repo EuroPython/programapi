@@ -65,7 +65,7 @@
                 "question": {
                     "id": 3434,
                     "question": {
-                        "en": "Social (Github/Gitlab)"
+                        "en": "Social (GitHub/GitLab)"
                     }
                 },
                 "answer": "https://github.com/F3DC8A",
@@ -221,7 +221,7 @@
                 "question": {
                     "id": 3431,
                     "question": {
-                        "en": "Company / Organization / Educational Institution"
+                        "en": "Company/Organization/Educational Institution"
                     }
                 },
                 "answer": "A Company",
