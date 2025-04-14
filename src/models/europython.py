@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import re
 from datetime import date, datetime
+from urllib.parse import quote
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
@@ -29,7 +31,7 @@ class EuroPythonSpeaker(BaseModel):
     mastodon_url: str | None = None
     linkedin_url: str | None = None
     bluesky_url: str | None = None
-    gitx: str | None = None
+    gitx_url: str | None = None
 
     @computed_field
     def website_url(self) -> str:
@@ -50,93 +52,210 @@ class EuroPythonSpeaker(BaseModel):
                 values["homepage"] = answer.answer_text
 
             if answer.question_text == SpeakerQuestion.twitter:
-                values["twitter_url"] = cls.extract_twitter_url(
-                    answer.answer_text.strip().split()[0]
-                )
+                values["twitter_url"] = cls.extract_twitter_url(answer.answer_text)
 
             if answer.question_text == SpeakerQuestion.mastodon:
-                values["mastodon_url"] = cls.extract_mastodon_url(
-                    answer.answer_text.strip().split()[0]
-                )
+                values["mastodon_url"] = cls.extract_mastodon_url(answer.answer_text)
 
             if answer.question_text == SpeakerQuestion.bluesky:
-                values["bluesky_url"] = cls.extract_bluesky_url(
-                    answer.answer_text.strip().split()[0]
-                )
+                values["bluesky_url"] = cls.extract_bluesky_url(answer.answer_text)
 
             if answer.question_text == SpeakerQuestion.linkedin:
-                values["linkedin_url"] = cls.extract_linkedin_url(
-                    answer.answer_text.strip().split()[0]
-                )
+                values["linkedin_url"] = cls.extract_linkedin_url(answer.answer_text)
 
             if answer.question_text == SpeakerQuestion.gitx:
-                values["gitx"] = answer.answer_text.strip().split()[0]
+                values["gitx_url"] = cls.extract_gitx_url(answer.answer_text)
 
         return values
 
     @staticmethod
-    def extract_twitter_url(text: str) -> str:
+    def extract_twitter_url(text: str) -> str | None:
         """
-        Extract the Twitter URL from the answer
+        Extracts a Twitter profile URL from the given text.
+        Cleans the input and handles following formats:
+        - @username
+        - username
+        - twitter.com/username
+        - x.com/username
         """
-        if text.startswith("@"):
-            twitter_url = f"https://x.com/{text[1:]}"
-        elif not text.startswith(("https://", "http://", "www.")):
-            twitter_url = f"https://x.com/{text}"
-        else:
-            twitter_url = (
-                f"https://{text.removeprefix('https://').removeprefix('http://')}"
-            )
+        cleaned = EuroPythonSpeaker._clean_social_input(text)
+        if cleaned is None:
+            print(f"Invalid Twitter URL: {text}")
+            return None
 
-        return twitter_url.split("?")[0]
+        # https://twitter.com/username (username max 15 chars)
+        match = re.match(r"^(twitter\.com|x\.com)/([\w]{1,15})$", cleaned)
+        if match:
+            _, username = match.groups()
+            return f"https://x.com/{username}"
+
+        # only username
+        if re.match(r"^[\w]{1,15}$", cleaned):
+            return f"https://x.com/{cleaned}"
+
+        print(f"Invalid Twitter URL: {cleaned}")
+        return None
 
     @staticmethod
-    def extract_mastodon_url(text: str) -> None | str:
+    def extract_mastodon_url(text: str) -> str | None:
         """
-        Normalize Mastodon handle or URL to the format: https://<instance>/@<username>
+        Extracts a Mastodon profile URL from the given text.
+        Supports formats like:
+        - @username@instance
+        - username@instance
+        - instance/@username
+        - instance/@username@instance (with redirect)
+        Returns: https://<instance>/@<username>
         """
-        text = text.strip().split("?", 1)[0]
+        cleaned = EuroPythonSpeaker._clean_social_input(text)
+        if not cleaned:
+            print(f"Invalid Mastodon URL: {text}")
+            return None
 
-        # Handle @username@instance or username@instance formats
-        if "@" in text and not text.startswith("http"):
-            parts = text.split("@")
-            if len(parts) == 3:  # @username@instance
-                _, username, instance = parts
-            elif len(parts) == 2:  # username@instance
-                username, instance = parts
-            else:
-                return None
+        # instance/@username
+        match = re.match(r"^([\w\.-]+)/@([\w\.-]+)$", cleaned)
+        if match:
+            instance, username = match.groups()
             return f"https://{instance}/@{username}"
 
-        # Handle full URLs
-        if text.startswith("http://"):
-            text = "https://" + text[len("http://") :]
-
-        return text
-
-    @staticmethod
-    def extract_linkedin_url(text: str) -> str:
-        """
-        Extract the LinkedIn URL from the answer
-        """
-        if text.startswith("in/"):
-            linkedin_url = f"https://linkedin.com/{text}"
-        elif not text.startswith(("https://", "http://", "www.", "linkedin.")):
-            linkedin_url = f"https://linkedin.com/in/{text}"
+        parts = cleaned.split("@")
+        if len(parts) == 3:  # instance@username@instance
+            _, username, instance = parts
+        elif len(parts) == 2:  # username@instance
+            username, instance = parts
         else:
-            linkedin_url = (
-                f"https://{text.removeprefix('https://').removeprefix('http://')}"
-            )
+            print(f"Invalid Mastodon URL: {cleaned}")
+            return None
 
-        return linkedin_url.split("?")[0]
+        if username and instance:
+            return f"https://{instance}/@{username}"
+
+        print(f"Invalid Mastodon URL: {cleaned}")
+        return None
 
     @staticmethod
-    def extract_bluesky_url(text: str) -> str:
+    def extract_linkedin_url(text: str) -> str | None:
         """
-        Returns a normalized BlueSky URL in the form https://bsky.app/profile/<USERNAME>.bsky.social,
-        or uses the entire domain if it's custom (e.g., .dev).
+        Extracts a LinkedIn personal profile URL from the given text.
+        Cleans the input and handles formats like:
+        - username
+        - linkedin.com/in/username
+        - @username
+        - tr.linkedin.com/in/username (country subdomains)
         """
-        text = text.strip().split("?", 1)[0]
+        cleaned = EuroPythonSpeaker._clean_social_input(text)
+        if cleaned is None:
+            print(f"Invalid LinkedIn URL: {text}")
+            return None
+
+        if cleaned.startswith("in/"):
+            linkedin_url = f"https://linkedin.com/{cleaned}"
+        elif not cleaned.startswith(("linkedin.", "in/")) and "." not in cleaned:
+            linkedin_url = f"https://linkedin.com/in/{cleaned}"
+        else:
+            linkedin_url = f"https://{cleaned}"
+
+        if not re.match(
+            r"^https://([\w-]+\.)?linkedin\.com/in/(?:[\w\-]|%[0-9A-Fa-f]{2})+$",
+            linkedin_url,
+        ):
+            print(f"Invalid LinkedIn URL: {linkedin_url}")
+            return None
+
+        return linkedin_url
+
+    @staticmethod
+    def extract_bluesky_url(text: str) -> str | None:
+        """
+        Extracts a Bluesky profile URL from the given text.
+        Cleans the input and handles formats like:
+        - username
+        - bsky.app/profile/username
+        - bsky/username
+        - username.dev
+        - @username
+        - username.bsky.social
+        """
+        cleaned = EuroPythonSpeaker._clean_social_input(text)
+        if cleaned is None:
+            print(f"Invalid Bluesky URL: {text}")
+            return None
+
+        for marker in ("bsky.app/profile/", "bsky/"):
+            if marker in cleaned:
+                cleaned = cleaned.split(marker, 1)[1]
+                break
+        else:
+            cleaned = cleaned.rsplit("/", 1)[-1]
+
+        if "." not in cleaned:
+            cleaned += ".bsky.social"
+
+        bluesky_url = f"https://bsky.app/profile/{cleaned}"
+
+        if not re.match(r"^https://bsky\.app/profile/[\w\.-]+\.[\w\.-]+$", bluesky_url):
+            print(f"Invalid Bluesky URL: {bluesky_url}")
+            return None
+
+        return bluesky_url
+
+    @staticmethod
+    def extract_gitx_url(text: str) -> str | None:
+        """
+        Extracts a GitHub/GitLab URL from the given text.
+        Cleans the input and handles formats like:
+        - username
+        - github.com/username
+        - gitlab.com/username
+        - @username
+        """
+        cleaned = EuroPythonSpeaker._clean_social_input(text)
+        if cleaned is None:
+            print(f"Invalid GitHub/GitLab URL: {text}")
+            return None
+
+        if cleaned.startswith(("github.com/", "gitlab.com/")):
+            return f"https://{cleaned}"
+
+        if re.match(r"^[\w-]+$", cleaned):  # assume github.com
+            return f"https://github.com/{cleaned}"
+
+        print(f"Invalid GitHub/GitLab URL: {cleaned}")
+        return None
+
+    @staticmethod
+    def _is_blank_or_na(text: str) -> bool:
+        """
+        Check if the text is blank or (equals "N/A" or "-")
+        """
+        return not text or text.strip().lower() in {"n/a", "-"}
+
+    @staticmethod
+    def _clean_social_input(text: str) -> str | None:
+        """
+        Cleans the input string for social media URLs.
+        Returns None if the input is blank or "N/A",
+        removes prefixes like "LinkedIn: " or "GH: ",
+        removes parameters like "?something=true",
+        removes trailing slashes,
+        removes "http://" or "https://",
+        removes "www." prefix,
+        removes "@" prefix,
+        and decodes URL-encoded characters.
+        """
+        if EuroPythonSpeaker._is_blank_or_na(text):
+            print(f"Blank or N/A input: {text}")
+            return None
+
+        text = text.strip()
+
+        # Handle inputs like "LinkedIn: https://linkedin.com/in/username"
+        # or "GH: https://github.com/username"
+        text = text.split(" ", 1)[1] if ": " in text else text
+
+        text = text.split("?", 1)[0]
+        text = text.split(",", 1)[0]
+        text = text.rstrip("/")
 
         if text.startswith("https://"):
             text = text[8:]
@@ -150,19 +269,11 @@ class EuroPythonSpeaker(BaseModel):
         if text.startswith("@"):
             text = text[1:]
 
-        for marker in ("bsky.app/profile/", "bsky/"):
-            if marker in text:
-                text = text.split(marker, 1)[1]
-                break
-        # case custom domain
-        else:
-            text = text.rsplit("/", 1)[-1]
+        # Percent-encode non-ASCII characters
+        if not text.isascii():
+            text = quote(text, safe="@/-_.+~#=:")
 
-        # if there's no dot, assume it's a non-custom handle and append '.bsky.social'
-        if "." not in text:
-            text += ".bsky.social"
-
-        return f"https://bsky.app/profile/{text}"
+        return text.lower()
 
 
 class EuroPythonSession(BaseModel):
