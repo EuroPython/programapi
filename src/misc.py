@@ -49,6 +49,10 @@ class Room(Enum):
     south_hall_2b = "South Hall 2B"
     exhibit_hall = "Exhibit Hall"
 
+    # Open space rooms
+    open_space_1 = "Space Room 1"
+    open_space_2 = "Space Room 2"
+
 
 class EventType(Enum):
     SESSION = "session"
