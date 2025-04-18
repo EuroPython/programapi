@@ -156,7 +156,7 @@ class EuroPythonSpeaker(BaseModel):
             linkedin_url = f"https://{cleaned}"
 
         if not re.match(
-            r"^https://([\w-]+\.)?linkedin\.com/in/(?:[\w\-]|%[0-9A-Fa-f]{2})+$",
+            r"^https://([\w-]+\.)?linkedin\.com/in/(?:[\w\-]|%[0-9A-Fa-f]{2})+(?:/[\w\-]+)*$",
             linkedin_url,
         ):
             print(f"Invalid LinkedIn URL: {linkedin_url}")
