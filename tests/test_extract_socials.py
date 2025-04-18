@@ -51,7 +51,10 @@ def test_extract_mastodon_url(input_string, result):
             "https://regional.linkedin.com/in/example",
         ),
         ("in/user123/nl", "https://linkedin.com/in/user123/nl"),
-        ("https://nl.linkedin.com/in/user123/en", "https://nl.linkedin.com/in/user123/en"),
+        (
+            "https://nl.linkedin.com/in/user123/en",
+            "https://nl.linkedin.com/in/user123/en",
+        ),
     ],
 )
 def test_extract_linkedin_url(input_string, result):
