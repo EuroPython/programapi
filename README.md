@@ -90,11 +90,11 @@ Hosted at:
 https://static.europython.eu/programme/ep2025/releases/current
 ```
 
-| Endpoint            | Description                                |
-|---------------------|--------------------------------------------|
-| `/speakers.json`    | List of confirmed speakers                 |
-| `/sessions.json`    | List of confirmed sessions                 |
-| `/schedule.json`    | Latest conference schedule                 |
+| Endpoint                                                                                            | Description                   |
+|-----------------------------------------------------------------------------------------------------|-------------------------------|
+| [`/speakers.json`](https://static.europython.eu/programme/ep2025/releases/current/speakers.json)    | List of confirmed speakers    |
+| [`/sessions.json`](https://static.europython.eu/programme/ep2025/releases/current/sessions.json)    | List of confirmed sessions    |
+| [`/schedule.json`](https://static.europython.eu/programme/ep2025/releases/current/schedule.json)    | Latest conference schedule    |
 
 ---
 
