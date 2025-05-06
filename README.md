@@ -1,6 +1,6 @@
 # 🎤 programapi
 
-This project powers the **EuroPython 2025** website and Discord bot by downloading, transforming, and serving clean, structured JSON files for sessions, speakers, and the schedule, all pulled from Pretalx.
+This project powers the **EuroPython 2025** website, Discord bot, and internal bot 🦜 by downloading, transforming, and serving clean, structured JSON files for sessions, speakers, and the schedule, all pulled from Pretalx.
 
 Built for transparency. Designed for reuse. Optimized for EuroPython.
 
@@ -94,7 +94,7 @@ https://static.europython.eu/programme/ep2025/releases/current
 |---------------------|--------------------------------------------|
 | `/speakers.json`    | List of confirmed speakers                 |
 | `/sessions.json`    | List of confirmed sessions                 |
-| `/schedule.json`    | Finalized conference schedule *(TBA)*      |
+| `/schedule.json`    | Latest conference schedule                 |
 
 ---
 
