@@ -21,6 +21,7 @@ exclude = set(args.exclude or [])
 headers = {
     "Accept": "application/json, text/javascript",
     "Authorization": f"Token {Config.token()}",
+    "Pretalx-Version": Config.api_version,
 }
 
 base_url = f"https://pretalx.com/api/events/{Config.event}/"
