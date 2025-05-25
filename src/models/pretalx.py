@@ -90,6 +90,10 @@ class PretalxSubmission(BaseModel):
     @field_validator("resources", mode="before")
     @classmethod
     def handle_resources(cls, v) -> list[dict[str, str]] | None:
+        if v and all(isinstance(res, int) for res in v):
+            # currently, ?expand=resources is broken in Pretalx
+            # https://github.com/pretalx/pretalx/issues/2040
+            return None
         return v or None
 
     @model_validator(mode="before")
