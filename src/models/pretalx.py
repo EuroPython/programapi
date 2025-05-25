@@ -95,8 +95,6 @@ class PretalxSubmission(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def process_values(cls, values) -> dict:
-        values["speakers"] = sorted([s["code"] for s in values["speakers"]])
-
         # Set slot information
         if values.get("slots"):
             slot = PretalxSlot.model_validate(values["slots"][0])

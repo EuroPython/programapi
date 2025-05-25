@@ -2,20 +2,8 @@
     {
         "code": "A8CD3F",
         "speakers": [
-            {
-                "code": "F3DC8A",
-                "name": "A Speaker",
-                "biography": "This is a biography of F3D speaker",
-                "avatar": "https://pretalx.com/media/avatars/picture.jpg",
-                "email": "f3dc8a@example.com"
-            },
-            {
-                "code": "ZXCVBN",
-                "name": "ZXC Speaker",
-                "biography": "This is a biography of ZXC speaker",
-                "avatar": "https://pretalx.com/media/avatars/picture.jpg",
-                "email": "zxcvbn@example.com"
-            }
+            "F3DC8A",
+            "ZXCVBN"
         ],
         "title": "This is a test talk from a test speaker about a test topic.",
         "submission_type": "Talk (long session)",
@@ -127,13 +115,7 @@
     {
         "code": "B8CD4F",
         "speakers": [
-            {
-                "code": "G3DC8A",
-                "name": "Another Speaker",
-                "biography": "This is a biography of F3D speaker",
-                "avatar": "https://pretalx.com/media/avatars/picture.jpg",
-                "email": "g3dc8a@example.com"
-            }
+            "G3DC8A"
         ],
         "title": "A talk with shorter title",
         "submission_type": "Talk",
