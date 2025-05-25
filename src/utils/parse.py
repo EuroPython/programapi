@@ -34,12 +34,12 @@ class Parse:
             js = json.load(fd)
             all_speakers = [PretalxSpeaker.model_validate(s) for s in js]
 
-            speakers_with_publishable_sessions: list[PretalxSubmission] = []
+            speakers_with_publishable_sessions: list[PretalxSpeaker] = []
             for speaker in all_speakers:
                 if publishable_sessions := Utils.publishable_sessions_of_speaker(
                     speaker, publishable_sessions_keys
                 ):
-                    speaker.submissions = publishable_sessions
+                    speaker.submissions = sorted(publishable_sessions)
                     speakers_with_publishable_sessions.append(speaker)
 
             publishable_speakers_by_code = {
