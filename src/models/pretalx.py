@@ -90,15 +90,19 @@ class PretalxSubmission(BaseModel):
     @field_validator("resources", mode="before")
     @classmethod
     def handle_resources(cls, v) -> list[dict[str, str]] | None:
-        if v and all(isinstance(res, int) for res in v):
-            # currently, ?expand=resources is broken in Pretalx
-            # https://github.com/pretalx/pretalx/issues/2040
-            return None
         return v or None
 
     @model_validator(mode="before")
     @classmethod
     def process_values(cls, values) -> dict:
+        # Transform resource information
+        if raw_resources := values.get("resources"):
+            resources = [
+                {"description": res["description"], "resource": res["resource"]}
+                for res in raw_resources
+            ]
+            values["resources"] = resources
+
         # Set slot information
         if values.get("slots"):
             slot = PretalxSlot.model_validate(values["slots"][0])
@@ -168,6 +172,9 @@ class PretalxSchedule(BaseModel):
             else:
                 # merge submission fields into slot
                 slot_dict.update(slot_dict.get("submission", {}))
+
+                # remove resource IDs (not expandable with API, not required for schedule)
+                slot_dict.pop("resources", None)
 
                 submission_slots.append(slot_dict)
 

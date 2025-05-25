@@ -33,7 +33,7 @@ schedule_url = (
 
 # Build resource list dynamically based on exclusions
 resources = [
-    "submissions?state=confirmed&expand=answers.question,submission_type,track,slots.room",
+    "submissions?state=confirmed&expand=answers.question,submission_type,track,slots.room,resources",
     "speakers?expand=answers.question",
 ]
 
