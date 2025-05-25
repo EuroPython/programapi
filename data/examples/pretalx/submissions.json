@@ -21,7 +21,9 @@
         "submission_type": "Talk (long session)",
         "submission_type_id": 3961,
         "track": {
-            "en": "Software Engineering & Architecture"
+            "name": {
+                "en": "Software Engineering & Architecture"
+            }
         },
         "track_id": 4493,
         "state": "confirmed",
@@ -137,7 +139,9 @@
         "submission_type": "Talk",
         "submission_type_id": 3961,
         "track": {
-            "en": "PyData: LLMs"
+            "name": {
+                "en": "PyData: LLMs"
+            }
         },
         "track_id": 4493,
         "state": "confirmed",

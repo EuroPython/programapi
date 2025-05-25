@@ -33,7 +33,7 @@ class PretalxSlot(BaseModel):
     @classmethod
     def handle_localized(cls, v) -> str | None:
         if isinstance(v, dict):
-            return v.get("en")
+            return v["name"].get("en")
         return v
 
 
@@ -77,7 +77,7 @@ class PretalxSubmission(BaseModel):
     @classmethod
     def handle_localized(cls, v) -> str | None:
         if isinstance(v, dict):
-            return v.get("en")
+            return v["name"].get("en")
         return v
 
     @field_validator("duration", mode="before")
