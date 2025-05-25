@@ -98,8 +98,9 @@ class PretalxSubmission(BaseModel):
         values["speakers"] = sorted([s["code"] for s in values["speakers"]])
 
         # Set slot information
-        if values.get("slot"):
-            slot = PretalxSlot.model_validate(values["slot"])
+        if values.get("slots"):
+            slot = PretalxSlot.model_validate(values["slots"][0])
+            values["slot"] = slot
             values["room"] = slot.room
             values["start"] = slot.start
             values["end"] = slot.end
@@ -146,3 +147,28 @@ class PretalxSchedule(BaseModel):
 
     slots: list[PretalxSubmission]
     breaks: list[PretalxScheduleBreak]
+
+    @model_validator(mode="before")
+    @classmethod
+    def process_values(cls, values) -> dict:
+        submission_slots = []
+        break_slots = []
+        for slot_dict in values["slots"]:
+            # extract nested slot fields into slot
+            slot_object = PretalxSlot.model_validate(slot_dict)
+            slot_dict["slot"] = slot_object
+            slot_dict["room"] = slot_object.room
+            slot_dict["start"] = slot_object.start
+            slot_dict["end"] = slot_object.end
+
+            if slot_dict.get("submission") is None:
+                break_slots.append(slot_dict)
+            else:
+                # merge submission fields into slot
+                slot_dict.update(slot_dict.get("submission", {}))
+
+                submission_slots.append(slot_dict)
+
+        values["slots"] = submission_slots
+        values["breaks"] = break_slots
+        return values
