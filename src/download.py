@@ -29,8 +29,8 @@ schedule_url = base_url + "schedules/latest/"
 
 # Build resource list dynamically based on exclusions
 resources = [
-    "submissions?questions=all&state=confirmed",
-    "speakers?questions=all",
+    "submissions?state=confirmed",
+    "speakers",
 ]
 
 if "youtube" not in exclude:
