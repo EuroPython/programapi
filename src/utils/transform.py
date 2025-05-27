@@ -83,7 +83,7 @@ class Transform:
                 code=speaker.code,
                 name=speaker.name,
                 biography=speaker.biography,
-                avatar=speaker.avatar,
+                avatar=speaker.avatar_url,
                 slug=speaker_code_to_slug[speaker.code],
                 answers=speaker.answers,
                 submissions=speaker.submissions,

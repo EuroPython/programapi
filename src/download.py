@@ -25,12 +25,16 @@ headers = {
 }
 
 base_url = f"https://pretalx.com/api/events/{Config.event}/"
-schedule_url = base_url + "schedules/latest/"
+schedule_url = (
+    base_url
+    + "schedules/latest?expand="
+    + "slots,slots.submission,slots.submission.submission_type,slots.submission.track,slots.room"
+)
 
 # Build resource list dynamically based on exclusions
 resources = [
-    "submissions?questions=all&state=confirmed",
-    "speakers?questions=all",
+    "submissions?state=confirmed&expand=answers.question,submission_type,track,slots.room,resources",
+    "speakers?expand=answers.question",
 ]
 
 if "youtube" not in exclude:

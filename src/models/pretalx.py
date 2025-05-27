@@ -33,7 +33,7 @@ class PretalxSlot(BaseModel):
     @classmethod
     def handle_localized(cls, v) -> str | None:
         if isinstance(v, dict):
-            return v.get("en")
+            return v["name"].get("en")
         return v
 
 
@@ -45,7 +45,7 @@ class PretalxSpeaker(BaseModel):
     code: str
     name: str
     biography: str | None = None
-    avatar: str
+    avatar_url: str
     submissions: list[str]
     answers: list[PretalxAnswer]
 
@@ -77,7 +77,7 @@ class PretalxSubmission(BaseModel):
     @classmethod
     def handle_localized(cls, v) -> str | None:
         if isinstance(v, dict):
-            return v.get("en")
+            return v["name"].get("en")
         return v
 
     @field_validator("duration", mode="before")
@@ -95,11 +95,18 @@ class PretalxSubmission(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def process_values(cls, values) -> dict:
-        values["speakers"] = sorted([s["code"] for s in values["speakers"]])
+        # Transform resource information
+        if raw_resources := values.get("resources"):
+            resources = [
+                {"description": res["description"], "resource": res["resource"]}
+                for res in raw_resources
+            ]
+            values["resources"] = resources
 
         # Set slot information
-        if values.get("slot"):
-            slot = PretalxSlot.model_validate(values["slot"])
+        if values.get("slots"):
+            slot = PretalxSlot.model_validate(values["slots"][0])
+            values["slot"] = slot
             values["room"] = slot.room
             values["start"] = slot.start
             values["end"] = slot.end
@@ -146,3 +153,31 @@ class PretalxSchedule(BaseModel):
 
     slots: list[PretalxSubmission]
     breaks: list[PretalxScheduleBreak]
+
+    @model_validator(mode="before")
+    @classmethod
+    def process_values(cls, values) -> dict:
+        submission_slots = []
+        break_slots = []
+        for slot_dict in values["slots"]:
+            # extract nested slot fields into slot
+            slot_object = PretalxSlot.model_validate(slot_dict)
+            slot_dict["slot"] = slot_object
+            slot_dict["room"] = slot_object.room
+            slot_dict["start"] = slot_object.start
+            slot_dict["end"] = slot_object.end
+
+            if slot_dict.get("submission") is None:
+                break_slots.append(slot_dict)
+            else:
+                # merge submission fields into slot
+                slot_dict.update(slot_dict.get("submission", {}))
+
+                # remove resource IDs (not expandable with API, not required for schedule)
+                slot_dict.pop("resources", None)
+
+                submission_slots.append(slot_dict)
+
+        values["slots"] = submission_slots
+        values["breaks"] = break_slots
+        return values
