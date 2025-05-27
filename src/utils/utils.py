@@ -147,16 +147,13 @@ class Utils:
 
         TODO: We assume a lot of things here, IMHO we should make things more flexible :)
         """
-        session_type = session.session_type.lower()
-        is_tutorial = "tutorial" in session_type
-        is_workshop = "workshop" in session_type
-
-        if (is_tutorial or is_workshop) and session.slot_count == 2:
-            # Half day workshops and tutorials have 2 slots, 90 minutes each, with a 15-minute break in between
+        if session.slot_count == 2:
+            # Half day sessions have 2 slots, 90 minutes each, with a 15-minute break in between
             return [session.start, session.start + timedelta(minutes=90 + 15)]
 
-        elif is_workshop and session.slot_count == 4:
-            # Full day workshops have 4 slots, 90 minutes each, with 15-minute breaks in between, and a 1-hour lunch break after the 2nd slot
+        elif session.slot_count == 4:
+            # Full day sessions have 4 slots, 90 minutes each, with a 15-minute break after the first slot,
+            # a 60-minute lunch break after the second slot, and a 15-minute break after the third slot
             return [
                 session.start,
                 session.start + timedelta(minutes=90 + 15),

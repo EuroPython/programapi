@@ -65,7 +65,7 @@ class PretalxSubmission(BaseModel):
     duration: str = ""
     resources: list[dict[str, str]] | None = None
     answers: list[PretalxAnswer]
-    slot: PretalxSlot | None = Field(..., exclude=True)
+    slots: list[PretalxSlot] = Field(default_factory=list, exclude=True)
     slot_count: int = Field(..., exclude=True)
 
     # Extracted from slot data
@@ -105,11 +105,12 @@ class PretalxSubmission(BaseModel):
 
         # Set slot information
         if values.get("slots"):
-            slot = PretalxSlot.model_validate(values["slots"][0])
-            values["slot"] = slot
-            values["room"] = slot.room
-            values["start"] = slot.start
-            values["end"] = slot.end
+            first_slot = PretalxSlot.model_validate(values["slots"][0])
+            values["room"] = first_slot.room
+            values["start"] = first_slot.start
+
+            last_slot = PretalxSlot.model_validate(values["slots"][-1])
+            values["end"] = last_slot.end
 
         return values
 
