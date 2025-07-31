@@ -65,6 +65,7 @@ def test_extract_linkedin_url(input_string, result):
 @pytest.mark.parametrize(
     ("input_string", "result"),
     [
+        ("@user.dev", "https://bsky.app/profile/user.dev"),
         ("user123", "https://bsky.app/profile/user123.bsky.social"),
         ("@user123", "https://bsky.app/profile/user123.bsky.social"),
         ("user123.bsky.social", "https://bsky.app/profile/user123.bsky.social"),

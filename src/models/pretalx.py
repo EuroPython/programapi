@@ -63,7 +63,7 @@ class PretalxSubmission(BaseModel):
     state: SubmissionState
     abstract: str = ""
     duration: str = ""
-    resources: list[dict[str, str]] | None = None
+    resources: list[dict[str, str | None]] | None = None
     answers: list[PretalxAnswer]
     slots: list[PretalxSlot] = Field(default_factory=list, exclude=True)
     slot_count: int = Field(..., exclude=True)
