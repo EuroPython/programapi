@@ -275,11 +275,19 @@ class EuroPythonSpeaker(BaseModel):
 
         # Remove invisible Unicode control characters (Bidi, LTR/RTL marks, etc.)
         invisible_chars = [
-            '\u200e', '\u200f',  # LTR / RTL marks
-            '\u202a', '\u202b', '\u202c', '\u202d', '\u202e',  # Directional overrides
-            '\u2066', '\u2067', '\u2068', '\u2069',  # Isolates
+            "\u200e",
+            "\u200f",  # LTR / RTL marks
+            "\u202a",
+            "\u202b",
+            "\u202c",
+            "\u202d",
+            "\u202e",  # Directional overrides
+            "\u2066",
+            "\u2067",
+            "\u2068",
+            "\u2069",  # Isolates
         ]
-        text = re.sub(f"[{''.join(invisible_chars)}]", '', text)
+        text = re.sub(f"[{''.join(invisible_chars)}]", "", text)
 
         # Percent-encode if needed (e.g., non-ASCII chars)
         if not text.isascii():
