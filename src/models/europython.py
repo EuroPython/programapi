@@ -241,39 +241,51 @@ class EuroPythonSpeaker(BaseModel):
         removes "http://" or "https://",
         removes "www." prefix,
         removes "@" prefix,
+        removes invisible Unicode control characters,
         and decodes URL-encoded characters.
         """
         if EuroPythonSpeaker._is_blank_or_na(text):
             print(f"Blank or N/A input: {text}")
             return None
 
+        # Strip leading/trailing whitespace
         text = text.strip()
 
-        # Handle inputs like "LinkedIn: https://linkedin.com/in/username"
-        # or "GH: https://github.com/username"
+        # Remove any text prefix like "LinkedIn: " or "GH: "
         text = text.split(" ", 1)[1] if ": " in text else text
 
+        # Remove query strings and trailing commas or slashes
         text = text.split("?", 1)[0]
         text = text.split(",", 1)[0]
         text = text.rstrip("/")
 
+        # Remove URL schemes
         if text.startswith("https://"):
             text = text[8:]
         elif text.startswith("http://"):
             text = text[7:]
 
+        # Remove "www." prefix
         if text.startswith("www."):
             text = text[4:]
 
-        # Remove @ if present
+        # Remove leading @
         if text.startswith("@"):
             text = text[1:]
 
-        # Percent-encode non-ASCII characters
+        # Remove invisible Unicode control characters (Bidi, LTR/RTL marks, etc.)
+        invisible_chars = [
+            '\u200e', '\u200f',  # LTR / RTL marks
+            '\u202a', '\u202b', '\u202c', '\u202d', '\u202e',  # Directional overrides
+            '\u2066', '\u2067', '\u2068', '\u2069',  # Isolates
+        ]
+        text = re.sub(f"[{''.join(invisible_chars)}]", '', text)
+
+        # Percent-encode if needed (e.g., non-ASCII chars)
         if not text.isascii():
             text = quote(text, safe="@/-_.+~#=:")
 
-        return text.lower()
+        return text.lower() if text else None
 
 
 class EuroPythonSession(BaseModel):
@@ -292,7 +304,7 @@ class EuroPythonSession(BaseModel):
     duration: str = ""
     level: str = ""
     delivery: str = ""
-    resources: list[dict[str, str]] | None = None
+    resources: list[dict[str, str | None]] | None = None
     room: str | None = None
     start: datetime | None = None
     end: datetime | None = None
