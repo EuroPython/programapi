@@ -3,48 +3,51 @@ name: Deploy to static server
 on:
   push:
     branches:
-      - ep2024
-      - ep2025
+      - "2025"
   schedule:
-    - cron: "*/10 * * * *" # every 10 minutes
+    - cron: "0 0 * * *" # every day at midnight
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
 jobs:
-  tests:
-    name: Run tests
+  deploy:
+    name: Deploy to GitHub Pages
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Python 3
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: "3.13"
 
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v6
-
-      - name: Install dependencies from uv.lock
-        run: make deps/install
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
 
       - name: Download data
-        run: uv run make download EXCLUDE="youtube" > /dev/null 2>&1
+        run: uv run make download EXCLUDE="schedule youtube" > /dev/null 2>&1
         env:
-            PRETALX_TOKEN: ${{ secrets.PRETALX_TOKEN }}
+          PRETALX_TOKEN: ${{ secrets.PRETALX_TOKEN }}
 
       - name: Transform data
-        run: uv run make transform EXCLUDE="youtube" > /dev/null 2>&1
+        run: uv run make transform EXCLUDE="schedule youtube" > /dev/null 2>&1
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.1
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          path: data/public/plc25
 
-      - name: Adjust known_hosts
-        run: ssh-keyscan "static.europython.eu" > ~/.ssh/known_hosts
-
-      - name: Deploy
-        run: uv run make deploy FORCE_DEPLOY=true
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
