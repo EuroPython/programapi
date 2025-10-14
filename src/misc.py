@@ -4,11 +4,13 @@ from enum import Enum
 class SpeakerQuestion:
     affiliation = "Company/Organization/Educational Institution"
     homepage = "Social (Homepage)"
-    twitter = "Social (X/Twitter)"
+    twitter = "Social (X/twitter)"
     bluesky = "Social (Bluesky)"
     linkedin = "Social (LinkedIn)"
     mastodon = "Social (Mastodon)"
+    instagram = "Social (Instagram)"
     gitx = "Social (GitHub/GitLab)"
+    timezone = "Timezone"
 
 
 class SubmissionQuestion:

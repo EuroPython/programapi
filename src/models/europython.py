@@ -32,6 +32,8 @@ class EuroPythonSpeaker(BaseModel):
     linkedin_url: str | None = None
     bluesky_url: str | None = None
     gitx_url: str | None = None
+    instagram_url: str | None = None
+    timezone: str | None = None
 
     @computed_field
     def website_url(self) -> str:
@@ -63,6 +65,12 @@ class EuroPythonSpeaker(BaseModel):
 
             if answer.question_text == SpeakerQuestion.gitx:
                 values["gitx_url"] = cls.extract_gitx_url(answer.answer_text)
+
+            if answer.question_text == SpeakerQuestion.instagram:
+                values["instagram_url"] = cls.extract_instagram_url(answer.answer_text)
+
+            if answer.question_text == SpeakerQuestion.timezone:
+                values["timezone"] = answer.answer_text
 
         return values
 
@@ -219,6 +227,33 @@ class EuroPythonSpeaker(BaseModel):
             return f"https://github.com/{cleaned}"
 
         print(f"Invalid GitHub/GitLab URL: {cleaned}")
+        return None
+
+    @staticmethod
+    def extract_instagram_url(text: str) -> str | None:
+        """
+        Extracts an Instagram profile URL from the given text.
+        Cleans the input and handles following formats:
+        - @username
+        - username
+        - instagram.com/username
+        """
+        cleaned = EuroPythonSpeaker._clean_social_input(text)
+        if cleaned is None:
+            print(f"Invalid Instagram URL: {text}")
+            return None
+
+        # https://instagram.com/username (username max 30 chars)
+        match = re.match(r"^instagram\.com/([\w\.]{1,30})$", cleaned)
+        if match:
+            username = match.groups()[0]
+            return f"https://instagram.com/{username}"
+
+        # only username
+        if re.match(r"^[\w\.]{1,30}$", cleaned):
+            return f"https://instagram.com/{cleaned}"
+
+        print(f"Invalid Instagram URL: {cleaned}")
         return None
 
     @staticmethod
