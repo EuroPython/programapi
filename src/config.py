@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 
 
 class Config:
-    event = "europython-2025"
-    event_dir_name = "ep2025"
+    event = "pyladiescon-2025"
+    event_dir_name = "plc25"
     api_version = "v1"
 
     project_root = Path(__file__).resolve().parents[1]

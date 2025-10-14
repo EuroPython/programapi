@@ -12,10 +12,12 @@ class SpeakerQuestion:
 
 
 class SubmissionQuestion:
+    talk_topic = "Talk topic"
     outline = "Outline"
     tweet = "Abstract as a short post (150 character max)"
     delivery = "My presentation can be delivered in-person"
-    level = "Expected audience expertise"
+    level = "Level"
+    language = "Language"
 
 
 class SubmissionState(Enum):

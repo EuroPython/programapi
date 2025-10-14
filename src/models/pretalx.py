@@ -16,7 +16,7 @@ class PretalxAnswer(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def extract(cls, values) -> dict:
-        values["question_text"] = values["question"]["question"]["en"]
+        values["question_text"] = values["question"]["question"]
         values["answer_text"] = values["answer"]
         values["answer_file"] = values["answer_file"]
         values["submission_id"] = values["submission"]
@@ -31,9 +31,9 @@ class PretalxSlot(BaseModel):
 
     @field_validator("room", mode="before")
     @classmethod
-    def handle_localized(cls, v) -> str | None:
+    def handle_dict(cls, v) -> str | None:
         if isinstance(v, dict):
-            return v["name"].get("en")
+            return v["name"]
         return v
 
 
@@ -63,6 +63,8 @@ class PretalxSubmission(BaseModel):
     state: SubmissionState
     abstract: str = ""
     duration: str = ""
+    content_locale: str = Field(exclude=True)
+    language: str = ""
     resources: list[dict[str, str | None]] | None = None
     answers: list[PretalxAnswer]
     slots: list[PretalxSlot] = Field(default_factory=list, exclude=True)
@@ -75,9 +77,9 @@ class PretalxSubmission(BaseModel):
 
     @field_validator("submission_type", "track", mode="before")
     @classmethod
-    def handle_localized(cls, v) -> str | None:
+    def handle_dict(cls, v) -> str | None:
         if isinstance(v, dict):
-            return v["name"].get("en")
+            return v["name"]
         return v
 
     @field_validator("duration", mode="before")
@@ -95,6 +97,8 @@ class PretalxSubmission(BaseModel):
     @model_validator(mode="before")
     @classmethod
     def process_values(cls, values) -> dict:
+        values["language"] = values["content_locale"]
+
         # Transform resource information
         if raw_resources := values.get("resources"):
             resources = [
@@ -128,13 +132,6 @@ class PretalxScheduleBreak(BaseModel):
     start: datetime
     end: datetime
     description: dict[str, str] | str
-
-    @field_validator("description", mode="before")
-    @classmethod
-    def handle_localized(cls, v) -> str | Any:
-        if isinstance(v, dict):
-            return v.get("en")
-        return v
 
     @model_validator(mode="before")
     @classmethod

@@ -35,9 +35,7 @@ class EuroPythonSpeaker(BaseModel):
 
     @computed_field
     def website_url(self) -> str:
-        return (
-            f"https://ep{Config.event.split('-')[1]}.europython.eu/speaker/{self.slug}"
-        )
+        return f"https://{Config.event.split('-')[1]}.conference.pyladies.com/speaker/{self.slug}"
 
     @model_validator(mode="before")
     @classmethod
@@ -312,6 +310,7 @@ class EuroPythonSession(BaseModel):
     duration: str = ""
     level: str = ""
     delivery: str = ""
+    language: str = ""
     resources: list[dict[str, str | None]] | None = None
     room: str | None = None
     start: datetime | None = None
@@ -334,9 +333,7 @@ class EuroPythonSession(BaseModel):
 
     @computed_field
     def website_url(self) -> str:
-        return (
-            f"https://ep{Config.event.split('-')[1]}.europython.eu/session/{self.slug}"
-        )
+        return f"https://{Config.event.split('-')[1]}.conference.pyladies.com/session/{self.slug}"
 
     @model_validator(mode="before")
     @classmethod
@@ -344,7 +341,11 @@ class EuroPythonSession(BaseModel):
         answers = [PretalxAnswer.model_validate(ans) for ans in values["answers"]]
 
         for answer in answers:
-            # TODO if we need any other questions
+            if answer.question_text == SubmissionQuestion.talk_topic and not values.get(
+                "track"
+            ):
+                values["track"] = answer.answer_text
+
             if answer.question_text == SubmissionQuestion.tweet:
                 values["tweet"] = answer.answer_text
 

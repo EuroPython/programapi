@@ -1,9 +1,9 @@
 [project]
 name = "programapi"
-version = "2025.4.5"
+version = "2025.10.14"
 description = "Programme API for EuroPython"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14"
 classifiers = [
   "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.12",
