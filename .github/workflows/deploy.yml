@@ -43,6 +43,25 @@ jobs:
       - name: Transform data
         run: uv run make transform EXCLUDE="schedule youtube" > /dev/null 2>&1
 
+      - name: Create index.html
+        run: |
+          cat > data/public/plc25/index.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>PyLadiesCon 2025 Program Data</title>
+          </head>
+          <body>
+            <h1>PyLadiesCon 2025 Program Data</h1>
+            <ul>
+              <li><a href="/sessions.json">sessions.json</a></li>
+              <li><a href="/speakers.json">speakers.json</a></li>
+            </ul>
+          </body>
+          </html>
+          EOF
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v4
         with:
