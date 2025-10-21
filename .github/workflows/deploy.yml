@@ -3,7 +3,7 @@ name: Deploy to static server
 on:
   push:
     branches:
-      - "2025"
+      - "plc2025"
   schedule:
     - cron: "0 0 * * *" # every day at midnight
   workflow_dispatch:
