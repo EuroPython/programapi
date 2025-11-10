@@ -36,12 +36,12 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: Download data
-        run: uv run make download EXCLUDE="schedule youtube" > /dev/null 2>&1
+        run: uv run make download EXCLUDE="youtube" > /dev/null 2>&1
         env:
           PRETALX_TOKEN: ${{ secrets.PRETALX_TOKEN }}
 
       - name: Transform data
-        run: uv run make transform EXCLUDE="schedule youtube" > /dev/null 2>&1
+        run: uv run make transform EXCLUDE="youtube" > /dev/null 2>&1
 
       - name: Create index.html
         run: |
