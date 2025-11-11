@@ -57,6 +57,7 @@ jobs:
             <ul>
               <li><a href="/sessions.json">sessions.json</a></li>
               <li><a href="/speakers.json">speakers.json</a></li>
+              <li><a href="/schedule.json">schedule.json</a></li>
             </ul>
           </body>
           </html>
