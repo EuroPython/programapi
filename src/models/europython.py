@@ -26,6 +26,7 @@ class EuroPythonSpeaker(BaseModel):
 
     # Extracted
     affiliation: str | None = None
+    occupation: str | None = None
     homepage: str | None = None
     twitter_url: str | None = None
     mastodon_url: str | None = None
@@ -47,6 +48,9 @@ class EuroPythonSpeaker(BaseModel):
         for answer in answers:
             if answer.question_text == SpeakerQuestion.affiliation:
                 values["affiliation"] = answer.answer_text
+
+            if answer.question_text == SpeakerQuestion.occupation:
+                values["occupation"] = answer.answer_text
 
             if answer.question_text == SpeakerQuestion.homepage:
                 values["homepage"] = answer.answer_text

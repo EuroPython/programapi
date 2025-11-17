@@ -21,6 +21,7 @@
     "slug": "a-speaker",
     "submissions": ["A1B2C3"],
     "affiliation": "A Company",
+    "occupation": "An occupation",
     "homepage": "https://example.com",
     "twitter_url": "https://x.com/B4D5E6",
     "linkedin_url": "https://linkedin.com/in/B4D5E6",
@@ -44,6 +45,7 @@
 | `slug`         | `string`           | URL-safe speaker name                                                 |
 | `submissions`  | `array[string]`    | Codes of sessions the speaker is involved in                          |
 | `affiliation`  | `string` \| `null` | Affiliated institution or organization                                |
+| `occupation`   | `string` \| `null` | Position, Job or Occupation                                           |
 | `homepage`     | `string` \| `null` | Personal or professional homepage                                     |
 | `twitter_url`  | `string` \| `null` | Normalized Twitter/X profile URL                                      |
 | `mastodon_url` | `string` \| `null` | Normalized Mastodon profile URL                                       |
