@@ -349,8 +349,10 @@ class EuroPythonSession(BaseModel):
                 values["tweet"] = answer.answer_text
 
             if answer.question_text == SubmissionQuestion.delivery:
-                if "in-person" in answer.answer_text:
+                if answer.answer_text == "in-person at the conference":
                     values["delivery"] = "in-person"
+                elif answer.answer_text == "in-person or remote":
+                    values["delivery"] = "in-person or remote"
                 else:
                     values["delivery"] = "remote"
 
