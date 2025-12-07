@@ -2,19 +2,19 @@ from enum import Enum
 
 
 class SpeakerQuestion:
-    affiliation = "Company/Organization/Educational Institution"
+    affiliation = "Company / Organization / Educational Institution"
     homepage = "Social (Homepage)"
     twitter = "Social (X/Twitter)"
     bluesky = "Social (Bluesky)"
-    linkedin = "Social (LinkedIn)"
     mastodon = "Social (Mastodon)"
-    gitx = "Social (GitHub/GitLab)"
+    linkedin = "Social (LinkedIn)"
+    gitx = "Social (Github/Gitlab)"
 
 
 class SubmissionQuestion:
     outline = "Outline"
-    tweet = "Abstract as a short post (150 character max)"
-    delivery = "My presentation can be delivered in-person"
+    tweet = "Abstract as a tweet / toot"
+    delivery = "My presentation can be delivered"
     level = "Expected audience expertise"
 
 

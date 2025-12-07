@@ -1,6 +1,6 @@
 # Variables for the project
 # =========================
-CONFERENCE ?= ep2025
+CONFERENCE ?= ep2024
 DATA_DIR ?= ./data/public/$(CONFERENCE)/
 
 # Variables for remote host
