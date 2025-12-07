@@ -3,8 +3,7 @@ name: Deploy to static server
 on:
   push:
     branches:
-      - ep2024
-      - ep2025
+      - ep2023
   schedule:
     - cron: "*/10 * * * *" # every 10 minutes
   workflow_dispatch:

@@ -111,6 +111,8 @@ class PretalxSubmission(BaseModel):
 
             last_slot = PretalxSlot.model_validate(values["slots"][-1])
             values["end"] = last_slot.end
+            if values["end"] is None:
+                print(f"Warning: end time is None for submission {values['code']}")
 
         return values
 
