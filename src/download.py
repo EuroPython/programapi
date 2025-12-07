@@ -56,7 +56,11 @@ for resource in resources:
     while url := data["next"]:
         n += 1
         pbar.update(1)
-        response = requests.get(url, headers=headers)
+        response = (
+            requests.get(url)
+            if resource_name == "youtube"
+            else requests.get(url, headers=headers)
+        )
 
         if response.status_code != 200:
             raise Exception(f"Error {response.status_code}: {response.text}")
