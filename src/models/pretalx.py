@@ -45,7 +45,7 @@ class PretalxSpeaker(BaseModel):
     code: str
     name: str
     biography: str | None = None
-    avatar_url: str
+    avatar_url: str | None = None
     submissions: list[str]
     answers: list[PretalxAnswer]
 

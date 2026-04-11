@@ -19,7 +19,7 @@ class EuroPythonSpeaker(BaseModel):
     code: str
     name: str
     biography: str | None = None
-    avatar: str
+    avatar: str | None = None
     slug: str
     answers: list[PretalxAnswer] = Field(..., exclude=True)
     submissions: list[str]
@@ -367,7 +367,7 @@ class EuroPythonScheduleSpeaker(BaseModel):
 
     code: str
     name: str
-    avatar: str
+    avatar: str | None = None
     slug: str
     website_url: str
 
