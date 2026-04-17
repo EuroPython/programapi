@@ -12,7 +12,7 @@ on:
 
 jobs:
   tests:
-    name: Run tests
+    name: Deploy to static server
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -26,18 +26,18 @@ jobs:
           python-version: '3.14'
 
       - name: Setup uv
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.1.0
 
       - name: Install dependencies from uv.lock
-        run: make deps/install
+        run: uv run make deps/install
 
       - name: Download data
-        run: uv run make download > /dev/null 2>&1
+        run: uv run make download EXCLUDE="schedule youtube" > /dev/null 2>&1
         env:
             PRETALX_TOKEN: ${{ secrets.PRETALX_TOKEN }}
 
       - name: Transform data
-        run: uv run make transform > /dev/null 2>&1
+        run: uv run make transform EXCLUDE="schedule youtube" > /dev/null 2>&1
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
