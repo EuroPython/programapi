@@ -5,6 +5,7 @@ on:
     branches:
       - ep2024
       - ep2025
+      - ep2026
   schedule:
     - cron: "*/10 * * * *" # every 10 minutes
   workflow_dispatch:
@@ -22,7 +23,7 @@ jobs:
       - name: Set up Python 3
         uses: actions/setup-python@v6
         with:
-          python-version: '3.13'
+          python-version: '3.14'
 
       - name: Setup uv
         uses: astral-sh/setup-uv@v7

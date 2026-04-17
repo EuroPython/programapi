@@ -1,6 +1,6 @@
 [project]
 name = "programapi"
-version = "2025.4.5"
+version = "2026.4.17"
 description = "Programme API for EuroPython"
 readme = "README.md"
 requires-python = ">=3.12"

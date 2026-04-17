@@ -32,6 +32,8 @@ class Room(Enum):
     Rooms at the conference venue, this can change year to year
     """
 
+    ## to be updated when the 2026 schedule is out
+
     # Tutorial/workshop rooms
     club_a = "Club A"
     club_b = "Club B"
