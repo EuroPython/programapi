@@ -7,11 +7,11 @@ on:
       - ep2025
       - ep2026
   schedule:
-    - cron: "*/10 * * * *" # every 10 minutes
+    - cron: "3-59/10 * * * *"
   workflow_dispatch:
 
 jobs:
-  tests:
+  deploy:
     name: Deploy to static server
     runs-on: ubuntu-latest
     timeout-minutes: 10
