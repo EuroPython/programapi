@@ -32,12 +32,12 @@ jobs:
         run: uv run make deps/install
 
       - name: Download data
-        run: uv run make download EXCLUDE="schedule youtube" > /dev/null 2>&1
+        run: uv run make download EXCLUDE="youtube" > /dev/null 2>&1
         env:
             PRETALX_TOKEN: ${{ secrets.PRETALX_TOKEN }}
 
       - name: Transform data
-        run: uv run make transform EXCLUDE="schedule youtube" > /dev/null 2>&1
+        run: uv run make transform EXCLUDE="youtube" > /dev/null 2>&1
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.1
