@@ -32,23 +32,16 @@ class Room(Enum):
     Rooms at the conference venue, this can change year to year
     """
 
-    ## to be updated when the 2026 schedule is out
-
-    # Tutorial/workshop rooms
-    club_a = "Club A"
-    club_b = "Club B"
-    club_c = "Club C"
-    club_d = "Club D"
-    club_e = "Club E"
-    club_h = "Club H"
-
-    # Conference rooms
-    forum_hall = "Forum Hall"
-    terrace_2a = "Terrace 2A"
-    terrace_2b = "Terrace 2B"
-    north_hall = "North Hall"
-    south_hall_2a = "South Hall 2A"
-    south_hall_2b = "South Hall 2B"
+    auditorium_s1 = "Auditorium Hall (S1)"
+    theatre_s2 = "Theatre Hall (S2)"
+    conference_s4 = "Conference Hall Complex (S4)"
+    chamber_s3a = "Chamber Hall A (S3A)"
+    chamber_s3b = "Chamber Hall B (S3B)"
+    conference_s4a = "Conference Hall Complex A (S4A)"
+    conference_s4b = "Conference Hall Complex B (S4B)"
+    glass_room_f0 = "Conference room F0 (Glass room)"
+    multifunctional_1 = "Multifunctional room 1 (2.015/2.016)"
+    fishbowl_f2 = "Reception Room F2 (Fishbowl)"
     exhibit_hall = "Exhibit Hall"
 
 

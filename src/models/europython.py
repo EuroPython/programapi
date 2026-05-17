@@ -328,7 +328,7 @@ class EuroPythonSession(BaseModel):
     @field_validator("room", mode="before")
     @classmethod
     def handle_poster_room(cls, value) -> str | None:
-        if value and "Main Hall" in value:
+        if value and "Poster Hall" in value:
             return "Exhibit Hall"
         return value
 
