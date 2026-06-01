@@ -323,6 +323,7 @@ class EuroPythonSession(BaseModel):
     next_session: str | None = None
     prev_session: str | None = None
     slot_count: int = Field(..., exclude=True)
+    scheduled_slot_starts: list[datetime] = Field(default_factory=list, exclude=True)
     youtube_url: str | None = None
 
     @field_validator("room", mode="before")
