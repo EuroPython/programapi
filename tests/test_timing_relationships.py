@@ -34,12 +34,12 @@ def test_submission_uses_last_timed_slot_before_blank_placeholders() -> None:
         None,
         slots=[
             {
-                "room": "Reception Room F2 (Fishbowl)",
+                "room": "Fishbowl",
                 "start": "2026-07-14T09:30:00+02:00",
                 "end": "2026-07-14T11:00:00+02:00",
             },
             {
-                "room": "Reception Room F2 (Fishbowl)",
+                "room": "Fishbowl",
                 "start": "2026-07-14T11:15:00+02:00",
                 "end": "2026-07-14T12:45:00+02:00",
             },
@@ -48,7 +48,7 @@ def test_submission_uses_last_timed_slot_before_blank_placeholders() -> None:
         ],
     )
 
-    assert session.room == "Reception Room F2 (Fishbowl)"
+    assert session.room == "Fishbowl"
     assert session.start.isoformat() == "2026-07-14T09:30:00+02:00"
     assert session.end.isoformat() == "2026-07-14T12:45:00+02:00"
 
@@ -82,12 +82,12 @@ def test_schedule_start_times_use_only_scheduled_slots() -> None:
         None,
         slots=[
             {
-                "room": "Reception Room F2 (Fishbowl)",
+                "room": "Fishbowl",
                 "start": "2026-07-14T09:30:00+02:00",
                 "end": "2026-07-14T11:00:00+02:00",
             },
             {
-                "room": "Reception Room F2 (Fishbowl)",
+                "room": "Fishbowl",
                 "start": "2026-07-14T11:15:00+02:00",
                 "end": "2026-07-14T12:45:00+02:00",
             },
