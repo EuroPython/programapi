@@ -409,6 +409,14 @@ class EuroPythonScheduleBreak(BaseModel):
     rooms: list[Room]
     start: datetime
 
+    @field_validator("rooms", mode="before")
+    @classmethod
+    def normalize_poster_rooms(cls, value):
+        return [
+            "Exhibit Hall" if isinstance(v, str) and "Poster Hall" in v else v
+            for v in value
+        ]
+
 
 class DaySchedule(BaseModel):
     rooms: list[Room]
