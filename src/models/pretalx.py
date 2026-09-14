@@ -103,14 +103,17 @@ class PretalxSubmission(BaseModel):
             ]
             values["resources"] = resources
 
-        # Set slot information
+        # Set slot information from scheduled slots. Pretalx may include empty
+        # placeholder slots for multi-slot submissions.
         if values.get("slots"):
-            first_slot = PretalxSlot.model_validate(values["slots"][0])
-            values["room"] = first_slot.room
-            values["start"] = first_slot.start
+            slots = [PretalxSlot.model_validate(slot) for slot in values["slots"]]
 
-            last_slot = PretalxSlot.model_validate(values["slots"][-1])
-            values["end"] = last_slot.end
+            if start_slot := next((slot for slot in slots if slot.start), None):
+                values["room"] = start_slot.room
+                values["start"] = start_slot.start
+
+            if end_slot := next((slot for slot in reversed(slots) if slot.end), None):
+                values["end"] = end_slot.end
 
         return values
 

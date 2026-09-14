@@ -32,21 +32,22 @@ class Room(Enum):
     Rooms at the conference venue, this can change year to year
     """
 
-    # Tutorial/workshop rooms
-    club_a = "Club A"
-    club_b = "Club B"
-    club_c = "Club C"
-    club_d = "Club D"
-    club_e = "Club E"
-    club_h = "Club H"
-
-    # Conference rooms
-    forum_hall = "Forum Hall"
-    terrace_2a = "Terrace 2A"
-    terrace_2b = "Terrace 2B"
-    north_hall = "North Hall"
-    south_hall_2a = "South Hall 2A"
-    south_hall_2b = "South Hall 2B"
+    s1 = "S1"
+    s2 = "S2"
+    s4 = "S4"
+    s3a = "S3A"
+    s3b = "S3B"
+    s4a = "S4A"
+    s4b = "S4B"
+    glass_room = "F0 (Glass Room)"
+    s4_1_2_3 = "S4 (1, 2, 3)"
+    s4_4 = "S4 (4)"
+    s4_5 = "S4 (5)"
+    fishbowl = "F2 (Fishbowl Room)"
+    room_2_017_2_018 = "Room 2.017/2.018"
+    poster_hall_a = "Poster Hall A"
+    poster_hall_b = "Poster Hall B"
+    poster_hall_c = "Poster Hall C"
     exhibit_hall = "Exhibit Hall"
 
 

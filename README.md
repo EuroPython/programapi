@@ -1,6 +1,6 @@
 # 🎤 programapi
 
-This project powers the **EuroPython 2025** website, Discord bot, and internal bot 🦜 by downloading, transforming, and serving clean, structured JSON files for sessions, speakers, and the schedule, all pulled from Pretalx.
+This project powers the **EuroPython 2026** website, Discord bot, and internal bot 🦜 by downloading, transforming, and serving clean, structured JSON files for sessions, speakers, and the schedule, all pulled from Pretalx.
 
 Built for transparency. Designed for reuse. Optimized for EuroPython.
 
@@ -87,14 +87,14 @@ PRETALX_TOKEN=your_api_token_here
 Hosted at:
 
 ```
-https://static.europython.eu/programme/ep2025/releases/current
+https://static.europython.eu/programme/ep2026/releases/current
 ```
 
 | Endpoint                                                                                            | Description                   |
 |-----------------------------------------------------------------------------------------------------|-------------------------------|
-| [`/speakers.json`](https://static.europython.eu/programme/ep2025/releases/current/speakers.json)    | List of confirmed speakers    |
-| [`/sessions.json`](https://static.europython.eu/programme/ep2025/releases/current/sessions.json)    | List of confirmed sessions    |
-| [`/schedule.json`](https://static.europython.eu/programme/ep2025/releases/current/schedule.json)    | Latest conference schedule    |
+| [`/speakers.json`](https://static.europython.eu/programme/ep2026/releases/current/speakers.json)    | List of confirmed speakers    |
+| [`/sessions.json`](https://static.europython.eu/programme/ep2026/releases/current/sessions.json)    | List of confirmed sessions    |
+| [`/schedule.json`](https://static.europython.eu/programme/ep2026/releases/current/schedule.json)    | Latest conference schedule    |
 
 ---
 
@@ -111,4 +111,4 @@ Feel free to open an issue or reach us at [infra@europython.eu](mailto:infra@eur
 
 ---
 
-📅 Last updated for: **EuroPython 2025**
+📅 Last updated for: **EuroPython 2026**

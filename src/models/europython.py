@@ -323,12 +323,13 @@ class EuroPythonSession(BaseModel):
     next_session: str | None = None
     prev_session: str | None = None
     slot_count: int = Field(..., exclude=True)
+    scheduled_slot_starts: list[datetime] = Field(default_factory=list, exclude=True)
     youtube_url: str | None = None
 
     @field_validator("room", mode="before")
     @classmethod
     def handle_poster_room(cls, value) -> str | None:
-        if value and "Main Hall" in value:
+        if value and "Poster Hall" in value:
             return "Exhibit Hall"
         return value
 
@@ -407,6 +408,14 @@ class EuroPythonScheduleBreak(BaseModel):
     duration: int
     rooms: list[Room]
     start: datetime
+
+    @field_validator("rooms", mode="before")
+    @classmethod
+    def normalize_poster_rooms(cls, value):
+        return [
+            "Exhibit Hall" if isinstance(v, str) and "Poster Hall" in v else v
+            for v in value
+        ]
 
 
 class DaySchedule(BaseModel):
