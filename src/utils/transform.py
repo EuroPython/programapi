@@ -59,6 +59,11 @@ class Transform:
                 next_session=TimingRelationships.get_next_session(submission.code),
                 prev_session=TimingRelationships.get_prev_session(submission.code),
                 slot_count=submission.slot_count,
+                scheduled_slot_starts=[
+                    slot.start
+                    for slot in submission.slots
+                    if slot.start and slot.end and slot.room
+                ],
                 youtube_url=youtube_data.get(submission.code),
             )
             ep_sessions[code] = ep_session
