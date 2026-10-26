@@ -14,28 +14,38 @@ class TimingRelationships:
     def compute(
         cls, all_sessions: ValuesView[PretalxSubmission] | list[PretalxSubmission]
     ) -> None:
-        for session in all_sessions:
+        cls.all_sessions_in_parallel = {}
+        cls.all_sessions_after = {}
+        cls.all_sessions_before = {}
+        cls.all_next_session = {}
+        cls.all_prev_session = {}
+
+        timed_sessions = [
+            session for session in all_sessions if session.start and session.end
+        ]
+
+        for session in timed_sessions:
             if not session.start or not session.end:
                 continue
 
             sessions_in_parallel = cls.compute_sessions_in_parallel(
-                session, all_sessions
+                session, timed_sessions
             )
             sessions_after = cls.compute_sessions_after(
-                session, all_sessions, sessions_in_parallel
+                session, timed_sessions, sessions_in_parallel
             )
             sessions_before = cls.compute_sessions_before(
-                session, all_sessions, sessions_in_parallel
+                session, timed_sessions, sessions_in_parallel
             )
 
             cls.all_sessions_in_parallel[session.code] = sessions_in_parallel
             cls.all_sessions_after[session.code] = sessions_after
             cls.all_sessions_before[session.code] = sessions_before
             cls.all_next_session[session.code] = cls.compute_prev_or_next_session(
-                session, sessions_after, all_sessions
+                session, sessions_after, timed_sessions
             )
             cls.all_prev_session[session.code] = cls.compute_prev_or_next_session(
-                session, sessions_before, all_sessions
+                session, sessions_before, timed_sessions
             )
 
     @classmethod
@@ -70,7 +80,9 @@ class TimingRelationships:
             if (
                 other_session.code == session.code
                 or other_session.start is None
+                or other_session.end is None
                 or session.start is None
+                or session.end is None
             ):
                 continue
 
