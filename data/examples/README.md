@@ -79,7 +79,7 @@
         "description": "Slides for the session"
       }
     ],
-    "room": "South Hall 2A",
+    "room": "Auditorium Hall (S1)",
     "start": "2099-07-10T14:00:00+02:00",
     "end": "2099-07-10T15:00:00+02:00",
     "website_url": "https://ep2099.europython.eu/session/example-talk",
@@ -211,6 +211,6 @@
 
 ### 🛠 Notes & Logic
 
-- `room` normalization maps `"Main Hall"` sessions to `"Exhibit Hall"` — Poster sessions rejoice!
+- `room` normalization maps `"Poster Hall"` sessions to `"Exhibit Hall"` — Poster sessions rejoice!
 - All `"Registration & Welcome"` events automatically include **all active rooms**.
 - Various `social_*_url` fields handle malformed inputs like `@name`, full URLs, or just `username`.
