@@ -147,6 +147,9 @@ class Utils:
 
         TODO: We assume a lot of things here, IMHO we should make things more flexible :)
         """
+        if session.scheduled_slot_starts:
+            return session.scheduled_slot_starts
+
         if session.slot_count == 2:
             # Half day sessions have 2 slots, 90 minutes each, with a 15-minute break in between
             return [session.start, session.start + timedelta(minutes=90 + 15)]
